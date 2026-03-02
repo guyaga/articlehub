@@ -1,0 +1,581 @@
+-- ================================================================
+-- COMBINED MIGRATION: Reem-AI Sentinel (v2 — Supabase Cloud compatible)
+-- ================================================================
+
+-- ################################################################
+-- ## SECTION 1: Extensions
+-- ################################################################
+
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- ################################################################
+-- ## SECTION 2: Enums
+-- ################################################################
+
+CREATE TYPE scan_status AS ENUM ('pending', 'running', 'partial', 'completed', 'failed');
+CREATE TYPE relevance_level AS ENUM ('none', 'low', 'medium', 'high');
+CREATE TYPE sentiment_type AS ENUM ('supportive', 'opposing', 'neutral', 'mixed');
+CREATE TYPE content_type AS ENUM (
+  'social_post_facebook',
+  'social_post_twitter',
+  'social_post_linkedin',
+  'visual_concept',
+  'op_ed',
+  'press_response',
+  'video_script_short',
+  'blog_post',
+  'custom'
+);
+CREATE TYPE approval_status AS ENUM ('draft', 'pending_review', 'approved', 'rejected', 'published', 'archived');
+CREATE TYPE source_type AS ENUM ('mainstream', 'economic', 'sectoral', 'social_media', 'other');
+CREATE TYPE ingestion_method AS ENUM ('rss', 'firecrawl', 'manual');
+CREATE TYPE kb_document_type AS ENUM ('transcript', 'article', 'social_post', 'talking_points', 'data_sheet', 'style_guide', 'other');
+CREATE TYPE delivery_status AS ENUM ('pending', 'sent', 'failed', 'bounced');
+
+-- ################################################################
+-- ## SECTION 3: Tables
+-- ################################################################
+
+CREATE TABLE profiles (
+  id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  full_name   TEXT,
+  role        TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN ('admin', 'editor', 'viewer')),
+  avatar_url  TEXT,
+  preferred_lang TEXT NOT NULL DEFAULT 'he' CHECK (preferred_lang IN ('he', 'en')),
+  receive_briefs BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE sources (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name             TEXT NOT NULL,
+  url              TEXT NOT NULL,
+  rss_url          TEXT,
+  source_type      source_type NOT NULL DEFAULT 'mainstream',
+  ingestion_method ingestion_method NOT NULL DEFAULT 'rss',
+  is_active        BOOLEAN NOT NULL DEFAULT TRUE,
+  failure_count    INT NOT NULL DEFAULT 0,
+  last_scraped_at  TIMESTAMPTZ,
+  config           JSONB DEFAULT '{}',
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE keywords (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  term_he    TEXT NOT NULL,
+  term_en    TEXT,
+  category   TEXT,
+  weight     REAL NOT NULL DEFAULT 1.0,
+  is_active  BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE scans (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  status               scan_status NOT NULL DEFAULT 'pending',
+  scan_type            TEXT NOT NULL DEFAULT 'scheduled' CHECK (scan_type IN ('scheduled', 'manual')),
+  scheduled_at         TIMESTAMPTZ,
+  started_at           TIMESTAMPTZ,
+  completed_at         TIMESTAMPTZ,
+  total_sources        INT NOT NULL DEFAULT 0,
+  successful_sources   INT NOT NULL DEFAULT 0,
+  failed_sources       INT NOT NULL DEFAULT 0,
+  articles_found       INT NOT NULL DEFAULT 0,
+  articles_relevant    INT NOT NULL DEFAULT 0,
+  error_log            JSONB,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE scan_source_results (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  scan_id        UUID NOT NULL REFERENCES scans(id) ON DELETE CASCADE,
+  source_id      UUID NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+  status         scan_status NOT NULL DEFAULT 'pending',
+  articles_found INT NOT NULL DEFAULT 0,
+  error_message  TEXT,
+  started_at     TIMESTAMPTZ,
+  completed_at   TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (scan_id, source_id)
+);
+
+CREATE TABLE articles (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_id        UUID REFERENCES sources(id) ON DELETE SET NULL,
+  url              TEXT NOT NULL,
+  url_hash         TEXT NOT NULL UNIQUE,
+  title            TEXT,
+  author           TEXT,
+  published_at     TIMESTAMPTZ,
+  content          TEXT,
+  content_length   INT,
+  is_drilled_down  BOOLEAN NOT NULL DEFAULT FALSE,
+  raw_html         TEXT,
+  metadata         JSONB DEFAULT '{}',
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_articles_url_hash ON articles(url_hash);
+CREATE INDEX idx_articles_published_at ON articles(published_at DESC);
+CREATE INDEX idx_articles_source_id ON articles(source_id);
+
+CREATE TABLE article_scans (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  article_id UUID NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  scan_id    UUID NOT NULL REFERENCES scans(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (article_id, scan_id)
+);
+
+CREATE TABLE analyses (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  article_id        UUID NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  relevance_score   REAL,
+  relevance_level   relevance_level,
+  sentiment         sentiment_type,
+  summary_he        TEXT,
+  summary_en        TEXT,
+  talking_points    JSONB,
+  entities          JSONB,
+  matched_keywords  JSONB,
+  model_used        TEXT,
+  prompt_tokens     INT,
+  completion_tokens INT,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_analyses_article_id ON analyses(article_id);
+CREATE INDEX idx_analyses_relevance ON analyses(relevance_score DESC);
+
+CREATE TABLE generated_content (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  article_id      UUID REFERENCES articles(id) ON DELETE SET NULL,
+  analysis_id     UUID REFERENCES analyses(id) ON DELETE SET NULL,
+  content_type    content_type NOT NULL,
+  title           TEXT,
+  body            TEXT NOT NULL,
+  body_he         TEXT,
+  body_en         TEXT,
+  approval_status approval_status NOT NULL DEFAULT 'draft',
+  approved_by     UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  approved_at     TIMESTAMPTZ,
+  revision        INT NOT NULL DEFAULT 1,
+  parent_id       UUID REFERENCES generated_content(id) ON DELETE SET NULL,
+  model_used      TEXT,
+  prompt_tokens   INT,
+  completion_tokens INT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_generated_content_status ON generated_content(approval_status);
+
+CREATE TABLE knowledge_base (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  doc_type    kb_document_type NOT NULL DEFAULT 'other',
+  title       TEXT NOT NULL,
+  content     TEXT NOT NULL,
+  source_url  TEXT,
+  tags        TEXT[] DEFAULT '{}',
+  metadata    JSONB DEFAULT '{}',
+  is_active   BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE knowledge_base_chunks (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  kb_id       UUID NOT NULL REFERENCES knowledge_base(id) ON DELETE CASCADE,
+  chunk_index INT NOT NULL,
+  content     TEXT NOT NULL,
+  token_count INT,
+  embedding   VECTOR(1536),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_kb_chunks_kb_id ON knowledge_base_chunks(kb_id);
+CREATE INDEX idx_kb_chunks_embedding ON knowledge_base_chunks
+  USING hnsw (embedding vector_cosine_ops)
+  WITH (m = 16, ef_construction = 64);
+
+CREATE TABLE briefs (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  scan_id              UUID REFERENCES scans(id) ON DELETE SET NULL,
+  executive_summary_he TEXT,
+  executive_summary_en TEXT,
+  html_content         TEXT,
+  article_count        INT NOT NULL DEFAULT 0,
+  delivery_status      delivery_status NOT NULL DEFAULT 'pending',
+  sent_at              TIMESTAMPTZ,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE brief_recipients (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  brief_id        UUID NOT NULL REFERENCES briefs(id) ON DELETE CASCADE,
+  profile_id      UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  email           TEXT NOT NULL,
+  delivery_status delivery_status NOT NULL DEFAULT 'pending',
+  delivered_at    TIMESTAMPTZ,
+  error_message   TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (brief_id, profile_id)
+);
+
+CREATE TABLE brief_articles (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  brief_id   UUID NOT NULL REFERENCES briefs(id) ON DELETE CASCADE,
+  article_id UUID NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (brief_id, article_id)
+);
+
+CREATE TABLE entity_registry (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name_he      TEXT NOT NULL,
+  name_en      TEXT,
+  entity_type  TEXT NOT NULL CHECK (entity_type IN ('person', 'organization', 'party', 'government_body', 'other')),
+  known_stance TEXT,
+  aliases      TEXT[] DEFAULT '{}',
+  metadata     JSONB DEFAULT '{}',
+  is_active    BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE article_entities (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  article_id   UUID NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  entity_id    UUID NOT NULL REFERENCES entity_registry(id) ON DELETE CASCADE,
+  mention_count INT NOT NULL DEFAULT 1,
+  context_snippet TEXT,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (article_id, entity_id)
+);
+
+CREATE TABLE system_config (
+  key         TEXT PRIMARY KEY,
+  value       JSONB NOT NULL,
+  description TEXT,
+  updated_by  UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE audit_log (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  actor_id    UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  action      TEXT NOT NULL,
+  table_name  TEXT,
+  record_id   UUID,
+  old_data    JSONB,
+  new_data    JSONB,
+  ip_address  INET,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_audit_log_actor ON audit_log(actor_id);
+CREATE INDEX idx_audit_log_action ON audit_log(action);
+CREATE INDEX idx_audit_log_created ON audit_log(created_at DESC);
+
+-- ################################################################
+-- ## SECTION 4: Functions & Triggers
+-- ################################################################
+
+-- Auto-update timestamps
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply updated_at triggers to all tables with updated_at column
+DO $$
+DECLARE
+  t TEXT;
+BEGIN
+  FOR t IN
+    SELECT table_name FROM information_schema.columns
+    WHERE column_name = 'updated_at'
+      AND table_schema = 'public'
+  LOOP
+    EXECUTE format(
+      'CREATE TRIGGER trg_%s_updated_at
+         BEFORE UPDATE ON %I
+         FOR EACH ROW EXECUTE FUNCTION update_updated_at()',
+      t, t
+    );
+  END LOOP;
+END;
+$$;
+
+-- Auto-create profile on auth signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, role)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data ->> 'full_name', NEW.email),
+    'viewer'
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Auto-compute relevance level from score
+CREATE OR REPLACE FUNCTION set_relevance_level()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.relevance_score IS NULL THEN
+    NEW.relevance_level = 'none';
+  ELSIF NEW.relevance_score < 0.3 THEN
+    NEW.relevance_level = 'low';
+  ELSIF NEW.relevance_score < 0.7 THEN
+    NEW.relevance_level = 'medium';
+  ELSE
+    NEW.relevance_level = 'high';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_analyses_set_relevance
+  BEFORE INSERT OR UPDATE OF relevance_score ON analyses
+  FOR EACH ROW EXECUTE FUNCTION set_relevance_level();
+
+-- RAG similarity search
+CREATE OR REPLACE FUNCTION match_kb_chunks(
+  query_embedding VECTOR(1536),
+  match_threshold FLOAT DEFAULT 0.7,
+  match_count INT DEFAULT 10
+)
+RETURNS TABLE (
+  id UUID,
+  kb_id UUID,
+  content TEXT,
+  similarity FLOAT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    kbc.id,
+    kbc.kb_id,
+    kbc.content,
+    1 - (kbc.embedding <=> query_embedding) AS similarity
+  FROM knowledge_base_chunks kbc
+  JOIN knowledge_base kb ON kb.id = kbc.kb_id
+  WHERE kb.is_active = TRUE
+    AND 1 - (kbc.embedding <=> query_embedding) > match_threshold
+  ORDER BY kbc.embedding <=> query_embedding
+  LIMIT match_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Dedup-aware article insertion
+CREATE OR REPLACE FUNCTION upsert_article(
+  p_url TEXT,
+  p_url_hash TEXT,
+  p_title TEXT,
+  p_author TEXT,
+  p_published_at TIMESTAMPTZ,
+  p_content TEXT,
+  p_source_id UUID,
+  p_scan_id UUID
+)
+RETURNS UUID AS $$
+DECLARE
+  v_article_id UUID;
+BEGIN
+  INSERT INTO articles (url, url_hash, title, author, published_at, content, source_id, content_length)
+  VALUES (p_url, p_url_hash, p_title, p_author, p_published_at, p_content, p_source_id, LENGTH(p_content))
+  ON CONFLICT (url_hash) DO UPDATE
+    SET updated_at = NOW()
+  RETURNING id INTO v_article_id;
+
+  INSERT INTO article_scans (article_id, scan_id)
+  VALUES (v_article_id, p_scan_id)
+  ON CONFLICT (article_id, scan_id) DO NOTHING;
+
+  RETURN v_article_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ################################################################
+-- ## SECTION 5: RLS Policies
+-- ################################################################
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sources ENABLE ROW LEVEL SECURITY;
+ALTER TABLE keywords ENABLE ROW LEVEL SECURITY;
+ALTER TABLE scans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE scan_source_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE articles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE article_scans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE analyses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE generated_content ENABLE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_base ENABLE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_base_chunks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE briefs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE brief_recipients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE brief_articles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE entity_registry ENABLE ROW LEVEL SECURITY;
+ALTER TABLE article_entities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE system_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
+
+-- Helper: get current user role (in public schema, not auth)
+CREATE OR REPLACE FUNCTION public.user_role()
+RETURNS TEXT AS $$
+  SELECT role FROM public.profiles WHERE id = auth.uid();
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- profiles
+CREATE POLICY "Users can view all profiles"
+  ON profiles FOR SELECT TO authenticated USING (TRUE);
+CREATE POLICY "Users can update own profile"
+  ON profiles FOR UPDATE TO authenticated
+  USING (id = auth.uid()) WITH CHECK (id = auth.uid());
+
+-- sources
+CREATE POLICY "Authenticated can read sources"
+  ON sources FOR SELECT TO authenticated USING (TRUE);
+CREATE POLICY "Admin can manage sources"
+  ON sources FOR ALL TO authenticated
+  USING (public.user_role() = 'admin') WITH CHECK (public.user_role() = 'admin');
+
+-- keywords
+CREATE POLICY "Authenticated can read keywords"
+  ON keywords FOR SELECT TO authenticated USING (TRUE);
+CREATE POLICY "Admin can manage keywords"
+  ON keywords FOR ALL TO authenticated
+  USING (public.user_role() = 'admin') WITH CHECK (public.user_role() = 'admin');
+
+-- scans
+CREATE POLICY "Authenticated can read scans"
+  ON scans FOR SELECT TO authenticated USING (TRUE);
+
+-- scan_source_results
+CREATE POLICY "Authenticated can read scan results"
+  ON scan_source_results FOR SELECT TO authenticated USING (TRUE);
+
+-- articles
+CREATE POLICY "Authenticated can read articles"
+  ON articles FOR SELECT TO authenticated USING (TRUE);
+
+-- article_scans
+CREATE POLICY "Authenticated can read article_scans"
+  ON article_scans FOR SELECT TO authenticated USING (TRUE);
+
+-- analyses
+CREATE POLICY "Authenticated can read analyses"
+  ON analyses FOR SELECT TO authenticated USING (TRUE);
+
+-- generated_content
+CREATE POLICY "Authenticated can read content"
+  ON generated_content FOR SELECT TO authenticated USING (TRUE);
+CREATE POLICY "Admin/editor can manage content"
+  ON generated_content FOR ALL TO authenticated
+  USING (public.user_role() IN ('admin', 'editor'))
+  WITH CHECK (public.user_role() IN ('admin', 'editor'));
+
+-- knowledge_base
+CREATE POLICY "Authenticated can read knowledge_base"
+  ON knowledge_base FOR SELECT TO authenticated USING (TRUE);
+CREATE POLICY "Admin/editor can manage knowledge_base"
+  ON knowledge_base FOR ALL TO authenticated
+  USING (public.user_role() IN ('admin', 'editor'))
+  WITH CHECK (public.user_role() IN ('admin', 'editor'));
+
+-- knowledge_base_chunks
+CREATE POLICY "Authenticated can read kb_chunks"
+  ON knowledge_base_chunks FOR SELECT TO authenticated USING (TRUE);
+
+-- briefs
+CREATE POLICY "Authenticated can read briefs"
+  ON briefs FOR SELECT TO authenticated USING (TRUE);
+
+-- brief_recipients
+CREATE POLICY "Users can read own brief deliveries"
+  ON brief_recipients FOR SELECT TO authenticated
+  USING (profile_id = auth.uid() OR public.user_role() = 'admin');
+
+-- brief_articles
+CREATE POLICY "Authenticated can read brief_articles"
+  ON brief_articles FOR SELECT TO authenticated USING (TRUE);
+
+-- entity_registry
+CREATE POLICY "Authenticated can read entities"
+  ON entity_registry FOR SELECT TO authenticated USING (TRUE);
+CREATE POLICY "Admin can manage entities"
+  ON entity_registry FOR ALL TO authenticated
+  USING (public.user_role() = 'admin') WITH CHECK (public.user_role() = 'admin');
+
+-- article_entities
+CREATE POLICY "Authenticated can read article_entities"
+  ON article_entities FOR SELECT TO authenticated USING (TRUE);
+
+-- system_config
+CREATE POLICY "Authenticated can read config"
+  ON system_config FOR SELECT TO authenticated USING (TRUE);
+CREATE POLICY "Admin can manage config"
+  ON system_config FOR ALL TO authenticated
+  USING (public.user_role() = 'admin') WITH CHECK (public.user_role() = 'admin');
+
+-- audit_log
+CREATE POLICY "Admin can read audit log"
+  ON audit_log FOR SELECT TO authenticated
+  USING (public.user_role() = 'admin');
+
+-- ################################################################
+-- ## SECTION 6: Seed Data
+-- ################################################################
+
+INSERT INTO sources (name, url, rss_url, source_type, ingestion_method) VALUES
+  ('Ynet',           'https://www.ynet.co.il',        'https://www.ynet.co.il/Integration/StoryRss2.xml',  'mainstream', 'rss'),
+  ('N12',            'https://www.mako.co.il/news',   NULL,                                                'mainstream', 'firecrawl'),
+  ('Walla',          'https://news.walla.co.il',      'https://rss.walla.co.il/feed/1',                    'mainstream', 'rss'),
+  ('Maariv',         'https://www.maariv.co.il',      'https://www.maariv.co.il/Rss/RssFeedsMivzakim',     'mainstream', 'rss'),
+  ('Haaretz',        'https://www.haaretz.co.il',     'https://www.haaretz.co.il/cmlink/1.1617539',        'mainstream', 'rss'),
+  ('Israel Hayom',   'https://www.israelhayom.co.il', 'https://www.israelhayom.co.il/rss.xml',             'mainstream', 'rss'),
+  ('Globes',         'https://www.globes.co.il',      'https://www.globes.co.il/webservice/rss/rssfeeder.asmx/FeederNode?iID=585', 'economic', 'rss'),
+  ('Calcalist',      'https://www.calcalist.co.il',   NULL,                                                'economic', 'firecrawl'),
+  ('Bizportal',      'https://www.bizportal.co.il',   NULL,                                                'economic', 'firecrawl'),
+  ('Kikar HaShabbat','https://www.kikar.co.il',       'https://www.kikar.co.il/rss',                       'sectoral',  'rss'),
+  ('Arutz 7',        'https://www.inn.co.il',         'https://www.inn.co.il/Rss.aspx',                    'sectoral',  'rss');
+
+INSERT INTO keywords (term_he, term_en, category, weight) VALUES
+  ('ראם', 'Reem', 'name', 2.0),
+  ('שר הכלכלה', 'Minister of Economy', 'title', 1.8),
+  ('משרד הכלכלה', 'Ministry of Economy', 'institution', 1.5),
+  ('יוקר המחיה', 'Cost of living', 'policy', 1.2),
+  ('תחרות עסקית', 'Business competition', 'policy', 1.0),
+  ('רגולציה', 'Regulation', 'policy', 1.0),
+  ('יבוא מקביל', 'Parallel import', 'policy', 1.2),
+  ('סחר חוץ', 'Foreign trade', 'policy', 1.0),
+  ('קואליציה', 'Coalition', 'politics', 0.8),
+  ('תקציב המדינה', 'State budget', 'policy', 1.0);
+
+INSERT INTO system_config (key, value, description) VALUES
+  ('scan_schedule', '["08:00", "14:30"]'::jsonb, 'Daily scan times (Israel time)'),
+  ('relevance_threshold', '0.85'::jsonb, 'Minimum relevance score for drill-down'),
+  ('brief_enabled', 'true'::jsonb, 'Whether to send email briefs after scans'),
+  ('max_articles_per_brief', '15'::jsonb, 'Maximum articles to include in a brief'),
+  ('drill_down_enabled', 'true'::jsonb, 'Whether to fetch full article content for relevant articles'),
+  ('claude_model', '"claude-sonnet-4-5-20250929"'::jsonb, 'Claude model for analysis'),
+  ('embedding_model', '"text-embedding-3-small"'::jsonb, 'OpenAI embedding model for RAG');

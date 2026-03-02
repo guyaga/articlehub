@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+
+# Environment files
+.env
+.env.local
+.env*.local
+
+# Build outputs
+.next/
+.netlify/
+.vercel/
+out/
+build/
+dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/
+
+# MCP config (machine-specific)
+.mcp.json
+
+# Supabase temp
+reem-sentinel/supabase/.temp/
+
+# Worker env (has secrets)
+reem-sentinel/worker/.env
+
+# Egg info
+*.egg-info/
