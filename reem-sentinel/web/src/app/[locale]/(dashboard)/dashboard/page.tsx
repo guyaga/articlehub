@@ -79,20 +79,7 @@ const SOURCE_PALETTE = [
   CHART_COLORS.slate,
 ];
 
-/** Map source name to its website favicon for logos. */
-const SOURCE_FAVICONS: Record<string, string> = {
-  "Ynet": "https://www.ynet.co.il/favicon.ico",
-  "Haaretz": "https://www.haaretz.co.il/favicon.ico",
-  "Walla": "https://www.walla.co.il/favicon.ico",
-  "Globes": "https://www.globes.co.il/favicon.ico",
-  "N12": "https://www.n12.co.il/favicon.ico",
-  "Calcalist": "https://www.calcalist.co.il/favicon.ico",
-  "Israel Hayom": "https://www.israelhayom.co.il/favicon.ico",
-  "Maariv": "https://www.maariv.co.il/favicon.ico",
-  "Arutz 7": "https://www.inn.co.il/favicon.ico",
-  "Kikar HaShabbat": "https://www.kikar.co.il/favicon.ico",
-  "Bizportal": "https://www.bizportal.co.il/favicon.ico",
-};
+import { SOURCE_FAVICONS } from "@/lib/constants";
 
 function relevanceTier(score: number | null | undefined) {
   if (!score) return { label: "Unscored", bg: "bg-slate-500/10 text-slate-400" };
@@ -104,6 +91,7 @@ function relevanceTier(score: number | null | undefined) {
 // ── Main Dashboard ────────────────────────────────────────────
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
+  const tCommon = useTranslations("common");
   const locale = useLocale();
   const isRTL = locale === "he";
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
@@ -146,10 +134,10 @@ export default function DashboardPage() {
       else low++;
     });
     const relevanceData = [
-      { name: isRTL ? "גבוהה" : "High", value: high, fill: CHART_COLORS.red },
-      { name: isRTL ? "בינונית" : "Medium", value: medium, fill: CHART_COLORS.amber },
-      { name: isRTL ? "נמוכה" : "Low", value: low, fill: CHART_COLORS.green },
-      { name: isRTL ? "לא מדורג" : "Unscored", value: unscored, fill: CHART_COLORS.slate },
+      { name: t("relevanceHigh"), value: high, fill: CHART_COLORS.red },
+      { name: t("relevanceMedium"), value: medium, fill: CHART_COLORS.amber },
+      { name: t("relevanceLow"), value: low, fill: CHART_COLORS.green },
+      { name: t("relevanceUnscored"), value: unscored, fill: CHART_COLORS.slate },
     ].filter((d) => d.value > 0);
 
     // Sentiment distribution
@@ -204,11 +192,11 @@ export default function DashboardPage() {
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
                     </span>
-                    {isRTL ? "פעיל" : "Live"}
+                    {t("live")}
                   </span>
                   <Separator orientation="vertical" className="h-4" />
                   <span className="text-sm text-muted-foreground">
-                    {t("lastScan")}: {timeAgo(lastScan.completed_at ?? lastScan.started_at)}
+                    {t("lastScan")}: {timeAgo(lastScan.completed_at ?? lastScan.started_at, locale)}
                   </span>
                 </>
               )}
@@ -251,7 +239,7 @@ export default function DashboardPage() {
             }
           />
           <MetricCard
-            label={isRTL ? "מקורות פעילים" : "Active Sources"}
+            label={t("activeSources")}
             value={sourceHealth.filter((s) => s.hasArticles).length}
             loading={!sources}
             icon={<Globe className="h-5 w-5" />}
@@ -270,7 +258,7 @@ export default function DashboardPage() {
                     {lastScan.articles_found}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    {isRTL ? "כתבות" : "found"}
+                    {tCommon("found")}
                   </span>
                 </div>
               ) : (
@@ -289,8 +277,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-red-400">
-                  {highRelevanceArticles.length}{" "}
-                  {isRTL ? "כתבות ברלוונטיות גבוהה" : "high-relevance articles detected"}
+                  {t("highRelevance", { count: highRelevanceArticles.length })}
                 </p>
                 <p className="text-xs text-red-400/60 mt-0.5 truncate" dir="auto">
                   {highRelevanceArticles[0]?.title}
@@ -312,7 +299,7 @@ export default function DashboardPage() {
               </CardTitle>
               {articles && (
                 <Badge variant="secondary" className="text-xs tabular-nums font-normal">
-                  {articles.length} {isRTL ? 'סה"כ' : "total"}
+                  {articles.length} {tCommon("total")}
                 </Badge>
               )}
             </CardHeader>
@@ -320,7 +307,7 @@ export default function DashboardPage() {
               {articlesLoading ? (
                 <LoadingSkeleton />
               ) : recentArticles.length === 0 ? (
-                <EmptyState isRTL={isRTL} />
+                <EmptyState t={t} />
               ) : (
                 <ScrollArea className="h-[540px]">
                   <div className="divide-y divide-border/50">
@@ -340,7 +327,7 @@ export default function DashboardPage() {
               <CardHeader className="pb-2 border-b border-border/50">
                 <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
-                  {isRTL ? "התפלגות מקורות" : "Source Distribution"}
+                  {t("sourceDistribution")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4 pb-3">
@@ -368,7 +355,7 @@ export default function DashboardPage() {
                             return (
                               <div className="rounded-md bg-popover border px-3 py-1.5 text-xs shadow-md">
                                 <span className="font-medium">{d.fullName}</span>:{" "}
-                                {d.count} {isRTL ? "כתבות" : "articles"}
+                                {d.count} {tCommon("articles")}
                               </div>
                             );
                           }}
@@ -383,7 +370,7 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-8">
-                    {isRTL ? "אין נתונים" : "No data yet"}
+                    {tCommon("noData")}
                   </p>
                 )}
               </CardContent>
@@ -396,7 +383,7 @@ export default function DashboardPage() {
                 <CardHeader className="pb-1 pt-4 px-4 border-b border-border/50">
                   <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <PieChartIcon className="h-3.5 w-3.5" />
-                    {isRTL ? "רלוונטיות" : "Relevance"}
+                    {t("relevanceLabel")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 pt-3">
@@ -458,7 +445,7 @@ export default function DashboardPage() {
               <Card className="overflow-hidden">
                 <CardHeader className="pb-1 pt-4 px-4 border-b border-border/50">
                   <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {isRTL ? "סנטימנט" : "Sentiment"}
+                    {t("sentimentLabel")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 pt-3">
@@ -524,7 +511,7 @@ export default function DashboardPage() {
               <CardHeader className="pb-2 border-b border-border/50">
                 <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                   <Globe className="h-4 w-4" />
-                  {isRTL ? "בריאות מקורות" : "Source Health"}
+                  {t("sourceHealth")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-3">
@@ -550,7 +537,7 @@ export default function DashboardPage() {
                       <TooltipContent side="top">
                         <p className="text-xs">
                           {s.name} — {s.ingestion_method.toUpperCase()}
-                          {!s.hasArticles && (isRTL ? " (אין נתונים)" : " (no data)")}
+                          {!s.hasArticles && ` (${tCommon("noData")})`}
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -564,13 +551,13 @@ export default function DashboardPage() {
               <CardHeader className="pb-2 border-b border-border/50">
                 <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  {isRTL ? "סריקות אחרונות" : "Scan History"}
+                  {t("scanHistory")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-3">
                 {!scans?.length ? (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    {isRTL ? "אין סריקות" : "No scans yet"}
+                    {t("noScans")}
                   </p>
                 ) : (
                   <div className="space-y-1">
@@ -586,17 +573,17 @@ export default function DashboardPage() {
                               {scan.articles_found}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              {isRTL ? "כתבות" : "articles"}
+                              {tCommon("articles")}
                             </span>
                             {scan.total_sources > 0 && (
                               <span className="text-xs text-muted-foreground">
                                 &middot; {scan.successful_sources}/{scan.total_sources}{" "}
-                                {isRTL ? "מקורות" : "sources"}
+                                {tCommon("sources")}
                               </span>
                             )}
                           </div>
                           <p className="text-[11px] text-muted-foreground/60">
-                            {timeAgo(scan.completed_at ?? scan.started_at)}
+                            {timeAgo(scan.completed_at ?? scan.started_at, locale)}
                           </p>
                         </div>
                         <Badge
@@ -824,19 +811,17 @@ function LoadingSkeleton() {
   );
 }
 
-function EmptyState({ isRTL }: { isRTL: boolean }) {
+function EmptyState({ t }: { t: (key: string) => string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center px-6">
       <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
         <Newspaper className="h-6 w-6 text-muted-foreground/50" />
       </div>
       <p className="text-sm font-medium">
-        {isRTL ? "אין כתבות עדיין" : "No articles yet"}
+        {t("noArticles")}
       </p>
       <p className="text-xs text-muted-foreground mt-1">
-        {isRTL
-          ? "הפעל סריקה כדי להתחיל לנטר מקורות חדשות."
-          : "Trigger a scan to start monitoring news sources."}
+        {t("noArticlesHint")}
       </p>
     </div>
   );

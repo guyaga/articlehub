@@ -98,7 +98,7 @@ export function renderBriefHtml(opts: {
   <div style="max-width:640px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; margin-top:20px; margin-bottom:20px;">
     <!-- Header -->
     <div style="background:#1e3a5f; color:#ffffff; padding:24px; text-align:center;">
-      <h1 style="margin:0; font-size:22px;">Sentinel Media Brief</h1>
+      <h1 style="margin:0; font-size:22px;">ArticleHub Media Brief</h1>
       <p style="margin:4px 0 0 0; font-size:14px; opacity:0.8;">${opts.dateStr} UTC</p>
     </div>
 
@@ -114,7 +114,7 @@ export function renderBriefHtml(opts: {
 
     <!-- Footer -->
     <div style="background:#f9fafb; padding:16px 24px; text-align:center; font-size:12px; color:#9ca3af; border-top:1px solid #e5e7eb;">
-      Powered by Reem-AI Sentinel &middot; Scan ID: ${opts.scanId}
+      Powered by ArticleHub &middot; Scan ID: ${opts.scanId}
     </div>
   </div>
 </body>

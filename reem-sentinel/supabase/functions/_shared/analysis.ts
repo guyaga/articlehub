@@ -48,7 +48,7 @@ export async function scoreHeadlinesBatch(
   }).join("\n");
 
   const prompt =
-    "You are a media monitoring assistant for an Israeli public figure. " +
+    "You are a media monitoring assistant. " +
     "Rate the relevance of each headline to the monitoring keywords.\n" +
     "Keywords marked CRITICAL should have the strongest influence on the score. " +
     "HIGH keywords are important. NORMAL keywords are supplementary.\n\n" +
@@ -101,7 +101,7 @@ export async function analyzeArticle(
     .join(", ");
 
   const prompt =
-    "You are a media analysis assistant for an Israeli public figure. " +
+    "You are a media analysis assistant. " +
     "Analyze this article and return a structured JSON response.\n" +
     "Give more weight to keywords marked CRITICAL, then HIGH, then NORMAL.\n\n" +
     `Monitoring keywords: ${kwText}\n\n` +

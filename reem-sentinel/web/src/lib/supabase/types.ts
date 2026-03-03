@@ -1,4 +1,4 @@
-// Database types for Reem-AI Sentinel
+// Database types for ArticleHub
 
 export type ScanStatus = "pending" | "running" | "partial" | "completed" | "failed";
 export type RelevanceLevel = "none" | "low" | "medium" | "high";

@@ -1,15 +1,16 @@
-export function timeAgo(date: string | null): string {
+export function timeAgo(date: string | null, locale: string = "en"): string {
   if (!date) return "\u2014";
   const now = Date.now();
   const then = new Date(date).getTime();
   const diff = now - then;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  const isHe = locale === "he";
+  if (mins < 1) return isHe ? "\u05E2\u05DB\u05E9\u05D9\u05D5" : "just now";
+  if (mins < 60) return isHe ? `\u05DC\u05E4\u05E0\u05D9 ${mins} \u05D3\u05E7\u05F3` : `${mins}m ago`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return isHe ? `\u05DC\u05E4\u05E0\u05D9 ${hours} \u05E9\u05E2\u05F3` : `${hours}h ago`;
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return isHe ? `\u05DC\u05E4\u05E0\u05D9 ${days} \u05D9\u05DE\u05D9\u05DD` : `${days}d ago`;
 }
 
 export function formatDate(date: string | null, locale: string = "he"): string {

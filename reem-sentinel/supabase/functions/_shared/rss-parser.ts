@@ -5,7 +5,7 @@ import type { ScrapedArticle } from "./types.ts";
 
 const parser = new Parser({
   timeout: 30_000,
-  headers: { "User-Agent": "ReeM-Sentinel/0.1" },
+  headers: { "User-Agent": "ArticleHub/1.0" },
 });
 
 export async function parseRssFeed(

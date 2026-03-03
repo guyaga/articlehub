@@ -1,6 +1,7 @@
 {
   "common": {
-    "appName": "Reem-AI Sentinel",
+    "appName": "ArticleHub",
+    "appDescription": "פלטפורמת ניטור חדשות ומודיעין מבוססת בינה מלאכותית",
     "loading": "טוען...",
     "save": "שמור",
     "cancel": "ביטול",
@@ -9,7 +10,13 @@
     "search": "חיפוש",
     "noResults": "לא נמצאו תוצאות",
     "error": "שגיאה",
-    "success": "בוצע בהצלחה"
+    "success": "בוצע בהצלחה",
+    "total": "סה\"כ",
+    "articles": "כתבות",
+    "sources": "מקורות",
+    "found": "נמצאו",
+    "noData": "אין נתונים",
+    "signingIn": "מתחבר..."
   },
   "nav": {
     "dashboard": "לוח בקרה",
@@ -25,17 +32,36 @@
     "email": "דוא\"ל",
     "password": "סיסמה",
     "loginTitle": "כניסה למערכת",
-    "loginSubtitle": "הזן את פרטי ההתחברות שלך"
+    "loginSubtitle": "הזן את פרטי ההתחברות שלך לגישה ללוח הבקרה"
+  },
+  "theme": {
+    "light": "מצב בהיר",
+    "dark": "מצב כהה"
   },
   "dashboard": {
     "title": "לוח בקרה",
     "totalArticles": "סה\"כ כתבות",
     "relevantArticles": "כתבות רלוונטיות",
+    "activeSources": "מקורות פעילים",
     "pendingContent": "תוכן ממתין",
     "lastScan": "סריקה אחרונה",
     "recentArticles": "כתבות אחרונות",
     "quickActions": "הפעל סריקה",
-    "scanning": "סורק..."
+    "scanning": "סורק...",
+    "live": "פעיל",
+    "sourceDistribution": "התפלגות מקורות",
+    "relevanceLabel": "רלוונטיות",
+    "sentimentLabel": "סנטימנט",
+    "sourceHealth": "בריאות מקורות",
+    "scanHistory": "סריקות אחרונות",
+    "noScans": "אין סריקות",
+    "noArticles": "אין כתבות עדיין",
+    "noArticlesHint": "הפעל סריקה כדי להתחיל לנטר מקורות חדשות.",
+    "highRelevance": "{count} כתבות ברלוונטיות גבוהה",
+    "relevanceHigh": "גבוהה",
+    "relevanceMedium": "בינונית",
+    "relevanceLow": "נמוכה",
+    "relevanceUnscored": "לא מדורג"
   },
   "scans": {
     "title": "סריקות",
@@ -43,8 +69,11 @@
     "status": "סטטוס",
     "sources": "מקורות",
     "articlesFound": "כתבות שנמצאו",
+    "relevant": "רלוונטיות",
     "startedAt": "התחיל ב",
-    "completedAt": "הסתיים ב"
+    "completedAt": "הסתיים ב",
+    "noScans": "אין סריקות עדיין. לחץ \"{action}\" להפעלת סריקה ראשונה.",
+    "failed": "נכשלו"
   },
   "articles": {
     "title": "כתבות",
@@ -58,7 +87,17 @@
     "sortBy": "מיין לפי",
     "sortNewest": "חדש ביותר",
     "sortOldest": "ישן ביותר",
-    "sortRelevance": "רלוונטיות"
+    "sortRelevance": "רלוונטיות",
+    "allRelevance": "כל הרלוונטיות",
+    "high": "גבוהה (70%+)",
+    "medium": "בינונית (40-70%)",
+    "low": "נמוכה (<40%)",
+    "allSentiment": "כל הסנטימנט",
+    "supportive": "תומך",
+    "opposing": "מתנגד",
+    "neutral": "ניטרלי",
+    "mixed": "מעורב",
+    "allSources": "כל המקורות"
   },
   "articleDetail": {
     "backToArticles": "חזרה לכתבות",
@@ -135,6 +174,32 @@
     "ingestionMethod": "שיטת קליטה",
     "active": "פעיל",
     "inactive": "לא פעיל",
-    "actions": "פעולות"
+    "actions": "פעולות",
+    "matches": "התאמות",
+    "failures": "כשלונות",
+    "sourcesConfigured": "{count} מקורות חדשות מוגדרים",
+    "activeOf": "פעילות",
+    "systemConfig": "תצורת מערכת",
+    "systemConfigDesc": "הגדרות ריצה עבור מערכת הסריקה",
+    "configKey": "מפתח",
+    "configValue": "ערך",
+    "configDescription": "תיאור",
+    "scoringTitle": "איך דירוג הרלוונטיות עובד",
+    "scoringDesc": "מילות מפתח פעילות נשלחות לבינה מלאכותית שמדרגת כל כותרת מ-0% עד 100%. כתבות מעל 50% מקבלות ניתוח מלא.",
+    "step1Title": "שלב 1: סריקה",
+    "step1Desc": "כל המקורות נסרקים וכותרות נאספות",
+    "step2Title": "שלב 2: ניקוד",
+    "step2Desc": "AI מדרג כל כותרת לפי מילות המפתח",
+    "step3Title": "שלב 3: ניתוח",
+    "step3Desc": "כתבות ≥50% מנותחות לעומק",
+    "weightCritical": "קריטי (משקל 8-10): השפעה מקסימלית",
+    "weightHigh": "גבוה (משקל 5-7): חשוב",
+    "weightNormal": "רגיל (משקל 0-4): משלים"
+  },
+  "timeAgo": {
+    "justNow": "עכשיו",
+    "minutesAgo": "לפני {count} דק׳",
+    "hoursAgo": "לפני {count} שע׳",
+    "daysAgo": "לפני {count} ימים"
   }
 }

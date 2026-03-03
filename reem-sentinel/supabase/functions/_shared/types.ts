@@ -1,4 +1,4 @@
-/** Shared TypeScript interfaces for Sentinel edge functions. */
+/** Shared TypeScript interfaces for ArticleHub edge functions. */
 
 export interface Source {
   id: string;

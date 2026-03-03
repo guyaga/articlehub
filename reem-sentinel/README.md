@@ -1,11 +1,11 @@
-# Reem-AI Sentinel
+# ArticleHub
 
-Automated news monitoring and AI content generation system for an Israeli public figure. The system scans Israeli news sources on a schedule, analyzes articles for relevance using Claude AI, and generates response content — all managed through a bilingual (Hebrew/English) dashboard.
+AI-powered news monitoring and intelligence platform. The system scans configurable news sources on a schedule, analyzes articles for relevance using Claude AI, and generates response content — all managed through a bilingual (Hebrew/English) dashboard.
 
 ## Architecture
 
 ```
-reem-sentinel/
+articlehub/
 ├── web/              # Next.js 16 frontend (dashboard)
 ├── supabase/
 │   ├── functions/    # 7 Supabase Edge Functions (Deno/TS)
@@ -184,7 +184,7 @@ Scan schedules are configured via `pg_cron` in the database:
 
 | Table | Purpose |
 |-------|---------|
-| `sources` | 11 Israeli news outlets (Ynet, N12, Walla, etc.) |
+| `sources` | Configurable news outlets (Ynet, N12, Walla, etc.) |
 | `articles` | Deduplicated by URL hash |
 | `analyses` | AI relevance scoring + sentiment analysis |
 | `generated_content` | AI content with approval workflow |

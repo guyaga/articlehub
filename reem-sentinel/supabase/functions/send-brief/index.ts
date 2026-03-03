@@ -64,7 +64,7 @@ serve(async (req) => {
     // Compose HTML
     const now = new Date();
     const dateStr = now.toISOString().replace("T", " ").slice(0, 16);
-    const subject = `Sentinel Media Brief - ${now.toLocaleDateString("en-GB", {
+    const subject = `ArticleHub Media Brief - ${now.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -129,7 +129,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Sentinel <sentinel@updates.reem-ai.com>",
+        from: "ArticleHub <alerts@bestguy.ai>",
         to: recipients,
         subject,
         html,

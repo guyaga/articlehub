@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/logo";
 
 const navItems = [
   { key: "dashboard", href: "/dashboard", icon: "LayoutDashboard" },
@@ -32,6 +33,7 @@ const navItems = [
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("nav");
   const tCommon = useTranslations("common");
+  const tTheme = useTranslations("theme");
   const locale = useLocale();
   const pathname = usePathname();
   const otherLocale = locale === "he" ? "en" : "he";
@@ -41,9 +43,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <Sidebar side={locale === "he" ? "right" : "left"} className="glass-subtle">
         <SidebarHeader className="p-4">
-          <h1 className="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            {tCommon("appName")}
-          </h1>
+          <div className="flex items-center gap-2.5">
+            <Logo className="h-7 w-7" />
+            <h1 className="text-lg font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              {tCommon("appName")}
+            </h1>
+          </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
@@ -79,12 +84,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {theme === "dark" ? (
               <>
                 <Sun className="h-4 w-4" />
-                <span className="text-xs">Light Mode</span>
+                <span className="text-xs">{tTheme("light")}</span>
               </>
             ) : (
               <>
                 <Moon className="h-4 w-4" />
-                <span className="text-xs">Dark Mode</span>
+                <span className="text-xs">{tTheme("dark")}</span>
               </>
             )}
           </Button>

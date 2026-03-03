@@ -193,12 +193,10 @@ function KeywordsTab() {
             </div>
             <div>
               <h3 className="text-sm font-semibold">
-                {isRTL ? "איך דירוג הרלוונטיות עובד" : "How Relevance Scoring Works"}
+                {t("scoringTitle")}
               </h3>
               <p className="text-xs text-muted-foreground mt-1">
-                {isRTL
-                  ? "מילות מפתח פעילות נשלחות לבינה מלאכותית שמדרגת כל כותרת מ-0% עד 100%. כתבות מעל 50% מקבלות ניתוח מלא."
-                  : "Active keywords are sent to AI which scores every headline from 0% to 100%. Articles above 50% receive full analysis."}
+                {t("scoringDesc")}
               </p>
             </div>
           </div>
@@ -206,27 +204,27 @@ function KeywordsTab() {
             <div className="flex items-center gap-2.5 rounded-md border border-border/50 bg-background/50 px-3 py-2.5">
               <Filter className="h-4 w-4 text-blue-400 shrink-0" />
               <div>
-                <p className="text-xs font-semibold">{isRTL ? "שלב 1: סריקה" : "Step 1: Scan"}</p>
+                <p className="text-xs font-semibold">{t("step1Title")}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {isRTL ? "כל המקורות נסרקים וכותרות נאספות" : "All sources scraped, headlines collected"}
+                  {t("step1Desc")}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2.5 rounded-md border border-border/50 bg-background/50 px-3 py-2.5">
               <Zap className="h-4 w-4 text-amber-400 shrink-0" />
               <div>
-                <p className="text-xs font-semibold">{isRTL ? "שלב 2: ניקוד" : "Step 2: Score"}</p>
+                <p className="text-xs font-semibold">{t("step2Title")}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {isRTL ? "AI מדרג כל כותרת לפי מילות המפתח" : "AI rates each headline against keywords"}
+                  {t("step2Desc")}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2.5 rounded-md border border-border/50 bg-background/50 px-3 py-2.5">
               <Brain className="h-4 w-4 text-purple-400 shrink-0" />
               <div>
-                <p className="text-xs font-semibold">{isRTL ? "שלב 3: ניתוח" : "Step 3: Analyze"}</p>
+                <p className="text-xs font-semibold">{t("step3Title")}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {isRTL ? "כתבות ≥50% מנותחות לעומק" : "Articles ≥50% get full AI analysis"}
+                  {t("step3Desc")}
                 </p>
               </div>
             </div>
@@ -234,15 +232,15 @@ function KeywordsTab() {
           <div className="mt-3 flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-red-500" />
-              {isRTL ? "קריטי (משקל 8-10): השפעה מקסימלית" : "CRITICAL (weight 8-10): Maximum influence"}
+              {t("weightCritical")}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-amber-500" />
-              {isRTL ? "גבוה (משקל 5-7): חשוב" : "HIGH (weight 5-7): Important"}
+              {t("weightHigh")}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-slate-500" />
-              {isRTL ? "רגיל (משקל 0-4): משלים" : "NORMAL (weight 0-4): Supplementary"}
+              {t("weightNormal")}
             </span>
           </div>
         </CardContent>
@@ -254,7 +252,7 @@ function KeywordsTab() {
           <div>
             <CardTitle>{t("keywords")}</CardTitle>
             <CardDescription>
-              {activeCount} {isRTL ? "פעילות" : "active"} / {keywords?.length ?? 0} {isRTL ? 'סה"כ' : "total"}
+              {activeCount} {t("activeOf")} / {keywords?.length ?? 0} {tc("total")}
             </CardDescription>
           </div>
           <Button size="sm" onClick={openAdd} className="cursor-pointer">
@@ -272,7 +270,7 @@ function KeywordsTab() {
                 <TableHead>
                   <span className="inline-flex items-center gap-1">
                     <BarChart3 className="h-3 w-3" />
-                    {isRTL ? "התאמות" : "Matches"}
+                    {t("matches")}
                   </span>
                 </TableHead>
                 <TableHead>{t("active")}</TableHead>
@@ -374,9 +372,7 @@ function KeywordsTab() {
               </label>
               <Input type="number" min={0} max={10} value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} />
               <p className="text-[11px] text-muted-foreground">
-                {isRTL
-                  ? "8-10 = קריטי (השפעה מקסימלית), 5-7 = גבוה, 0-4 = רגיל"
-                  : "8-10 = CRITICAL (max influence), 5-7 = HIGH, 0-4 = NORMAL"}
+                {t("weightCritical").split(":")[0] + ", " + t("weightHigh").split(":")[0] + ", " + t("weightNormal").split(":")[0]}
               </p>
             </div>
           </div>
@@ -494,7 +490,7 @@ function SourcesTab() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>{t("sources")}</CardTitle>
-            <CardDescription>{sources?.length ?? 0} news sources configured</CardDescription>
+            <CardDescription>{t("sourcesConfigured", { count: sources?.length ?? 0 })}</CardDescription>
           </div>
           <Button size="sm" onClick={openAdd}>
             <Plus /> {t("addSource")}
@@ -508,7 +504,7 @@ function SourcesTab() {
                 <TableHead>{t("sourceType")}</TableHead>
                 <TableHead>{t("ingestionMethod")}</TableHead>
                 <TableHead>{t("active")}</TableHead>
-                <TableHead>Failures</TableHead>
+                <TableHead>{t("failures")}</TableHead>
                 <TableHead className="w-24">{t("actions")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -635,6 +631,7 @@ function SourcesTab() {
 
 // ── Schedule Tab ───────────────────────────────────────────────
 function ScheduleTab() {
+  const t = useTranslations("settings");
   const { data: config, isLoading } = useSystemConfig();
 
   if (isLoading) return <Skeleton className="h-64 w-full" />;
@@ -642,16 +639,16 @@ function ScheduleTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>System Configuration</CardTitle>
-        <CardDescription>Runtime configuration for the scanning system</CardDescription>
+        <CardTitle>{t("systemConfig")}</CardTitle>
+        <CardDescription>{t("systemConfigDesc")}</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Key</TableHead>
-              <TableHead>Value</TableHead>
-              <TableHead>Description</TableHead>
+              <TableHead>{t("configKey")}</TableHead>
+              <TableHead>{t("configValue")}</TableHead>
+              <TableHead>{t("configDescription")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

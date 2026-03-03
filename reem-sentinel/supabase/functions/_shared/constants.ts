@@ -1,5 +1,6 @@
-/** Shared constants for Sentinel edge functions. */
+/** Shared constants for ArticleHub edge functions. */
 
+/** Fallback threshold; actual value read from system_config at runtime */
 export const RELEVANCE_THRESHOLD = parseFloat(
   Deno.env.get("RELEVANCE_THRESHOLD") ?? "0.5",
 );

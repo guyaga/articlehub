@@ -1,6 +1,7 @@
 {
   "common": {
-    "appName": "Reem-AI Sentinel",
+    "appName": "ArticleHub",
+    "appDescription": "AI-powered news monitoring and intelligence platform",
     "loading": "Loading...",
     "save": "Save",
     "cancel": "Cancel",
@@ -9,7 +10,13 @@
     "search": "Search",
     "noResults": "No results found",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "total": "total",
+    "articles": "articles",
+    "sources": "sources",
+    "found": "found",
+    "noData": "No data yet",
+    "signingIn": "Signing in..."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -25,17 +32,36 @@
     "email": "Email",
     "password": "Password",
     "loginTitle": "Sign In",
-    "loginSubtitle": "Enter your credentials"
+    "loginSubtitle": "Enter your credentials to access the dashboard"
+  },
+  "theme": {
+    "light": "Light Mode",
+    "dark": "Dark Mode"
   },
   "dashboard": {
     "title": "Dashboard",
     "totalArticles": "Total Articles",
     "relevantArticles": "Relevant Articles",
+    "activeSources": "Active Sources",
     "pendingContent": "Pending Content",
     "lastScan": "Last Scan",
     "recentArticles": "Recent Articles",
     "quickActions": "Run Scan",
-    "scanning": "Scanning..."
+    "scanning": "Scanning...",
+    "live": "Live",
+    "sourceDistribution": "Source Distribution",
+    "relevanceLabel": "Relevance",
+    "sentimentLabel": "Sentiment",
+    "sourceHealth": "Source Health",
+    "scanHistory": "Scan History",
+    "noScans": "No scans yet",
+    "noArticles": "No articles yet",
+    "noArticlesHint": "Trigger a scan to start monitoring news sources.",
+    "highRelevance": "{count} high-relevance articles detected",
+    "relevanceHigh": "High",
+    "relevanceMedium": "Medium",
+    "relevanceLow": "Low",
+    "relevanceUnscored": "Unscored"
   },
   "scans": {
     "title": "Scans",
@@ -43,8 +69,11 @@
     "status": "Status",
     "sources": "Sources",
     "articlesFound": "Articles Found",
+    "relevant": "Relevant",
     "startedAt": "Started At",
-    "completedAt": "Completed At"
+    "completedAt": "Completed At",
+    "noScans": "No scans yet. Click \"{action}\" to run the first one.",
+    "failed": "failed"
   },
   "articles": {
     "title": "Articles",
@@ -58,7 +87,17 @@
     "sortBy": "Sort by",
     "sortNewest": "Newest First",
     "sortOldest": "Oldest First",
-    "sortRelevance": "Relevance"
+    "sortRelevance": "Relevance",
+    "allRelevance": "All Relevance",
+    "high": "High (70%+)",
+    "medium": "Medium (40-70%)",
+    "low": "Low (<40%)",
+    "allSentiment": "All Sentiment",
+    "supportive": "Supportive",
+    "opposing": "Opposing",
+    "neutral": "Neutral",
+    "mixed": "Mixed",
+    "allSources": "All Sources"
   },
   "articleDetail": {
     "backToArticles": "Back to Articles",
@@ -135,6 +174,32 @@
     "ingestionMethod": "Ingestion Method",
     "active": "Active",
     "inactive": "Inactive",
-    "actions": "Actions"
+    "actions": "Actions",
+    "matches": "Matches",
+    "failures": "Failures",
+    "sourcesConfigured": "{count} news sources configured",
+    "activeOf": "active",
+    "systemConfig": "System Configuration",
+    "systemConfigDesc": "Runtime configuration for the scanning system",
+    "configKey": "Key",
+    "configValue": "Value",
+    "configDescription": "Description",
+    "scoringTitle": "How Relevance Scoring Works",
+    "scoringDesc": "Active keywords are sent to AI which scores every headline from 0% to 100%. Articles above 50% receive full analysis.",
+    "step1Title": "Step 1: Scan",
+    "step1Desc": "All sources scraped, headlines collected",
+    "step2Title": "Step 2: Score",
+    "step2Desc": "AI rates each headline against keywords",
+    "step3Title": "Step 3: Analyze",
+    "step3Desc": "Articles ≥50% get full AI analysis",
+    "weightCritical": "CRITICAL (weight 8-10): Maximum influence",
+    "weightHigh": "HIGH (weight 5-7): Important",
+    "weightNormal": "NORMAL (weight 0-4): Supplementary"
+  },
+  "timeAgo": {
+    "justNow": "just now",
+    "minutesAgo": "{count}m ago",
+    "hoursAgo": "{count}h ago",
+    "daysAgo": "{count}d ago"
   }
 }

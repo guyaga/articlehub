@@ -30,7 +30,7 @@ export default function ScansPage() {
           onClick={() => triggerScan.mutate()}
           disabled={triggerScan.isPending}
         >
-          {triggerScan.isPending ? "Scanning..." : t("triggerScan")}
+          {triggerScan.isPending ? t("status") + "..." : t("triggerScan")}
         </Button>
       </div>
 
@@ -44,7 +44,7 @@ export default function ScansPage() {
             </div>
           ) : !scans?.length ? (
             <p className="text-muted-foreground text-sm text-center py-8">
-              No scans yet. Click &quot;{t("triggerScan")}&quot; to run the first one.
+              {t("noScans", { action: t("triggerScan") })}
             </p>
           ) : (
             <Table>
@@ -53,7 +53,7 @@ export default function ScansPage() {
                   <TableHead>{t("status")}</TableHead>
                   <TableHead>{t("sources")}</TableHead>
                   <TableHead>{t("articlesFound")}</TableHead>
-                  <TableHead>Relevant</TableHead>
+                  <TableHead>{t("relevant")}</TableHead>
                   <TableHead>{t("startedAt")}</TableHead>
                   <TableHead>{t("completedAt")}</TableHead>
                 </TableRow>
@@ -69,7 +69,7 @@ export default function ScansPage() {
                     <TableCell>
                       <span className="text-green-400">{scan.successful_sources}</span>
                       {scan.failed_sources > 0 && (
-                        <span className="text-red-400"> / {scan.failed_sources} failed</span>
+                        <span className="text-red-400"> / {scan.failed_sources} {t("failed")}</span>
                       )}
                       <span className="text-muted-foreground"> / {scan.total_sources}</span>
                     </TableCell>

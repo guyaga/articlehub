@@ -18,20 +18,7 @@ import { useArticles, useSources } from "@/lib/hooks/use-data";
 import { timeAgo, formatDate, relevanceColor, sentimentColor } from "@/lib/format";
 import type { Analysis } from "@/lib/supabase/types";
 
-/** Map source name to its website favicon for logos. */
-const SOURCE_FAVICONS: Record<string, string> = {
-  "Ynet": "https://www.ynet.co.il/favicon.ico",
-  "Haaretz": "https://www.haaretz.co.il/favicon.ico",
-  "Walla": "https://www.walla.co.il/favicon.ico",
-  "Globes": "https://www.globes.co.il/favicon.ico",
-  "N12": "https://www.n12.co.il/favicon.ico",
-  "Calcalist": "https://www.calcalist.co.il/favicon.ico",
-  "Israel Hayom": "https://www.israelhayom.co.il/favicon.ico",
-  "Maariv": "https://www.maariv.co.il/favicon.ico",
-  "Arutz 7": "https://www.inn.co.il/favicon.ico",
-  "Kikar HaShabbat": "https://www.kikar.co.il/favicon.ico",
-  "Bizportal": "https://www.bizportal.co.il/favicon.ico",
-};
+import { SOURCE_FAVICONS } from "@/lib/constants";
 
 export default function ArticlesPage() {
   const t = useTranslations("articles");
@@ -111,10 +98,10 @@ export default function ArticlesPage() {
             <SelectValue placeholder={t("relevance")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Relevance</SelectItem>
-            <SelectItem value="high">High (70%+)</SelectItem>
-            <SelectItem value="medium">Medium (40-70%)</SelectItem>
-            <SelectItem value="low">Low (&lt;40%)</SelectItem>
+            <SelectItem value="all">{t("allRelevance")}</SelectItem>
+            <SelectItem value="high">{t("high")}</SelectItem>
+            <SelectItem value="medium">{t("medium")}</SelectItem>
+            <SelectItem value="low">{t("low")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sentimentFilter} onValueChange={setSentimentFilter}>
@@ -122,11 +109,11 @@ export default function ArticlesPage() {
             <SelectValue placeholder={t("sentiment")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Sentiment</SelectItem>
-            <SelectItem value="supportive">Supportive</SelectItem>
-            <SelectItem value="opposing">Opposing</SelectItem>
-            <SelectItem value="neutral">Neutral</SelectItem>
-            <SelectItem value="mixed">Mixed</SelectItem>
+            <SelectItem value="all">{t("allSentiment")}</SelectItem>
+            <SelectItem value="supportive">{t("supportive")}</SelectItem>
+            <SelectItem value="opposing">{t("opposing")}</SelectItem>
+            <SelectItem value="neutral">{t("neutral")}</SelectItem>
+            <SelectItem value="mixed">{t("mixed")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sourceFilter} onValueChange={setSourceFilter}>
@@ -134,7 +121,7 @@ export default function ArticlesPage() {
             <SelectValue placeholder={t("source")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{locale === "he" ? "כל המקורות" : "All Sources"}</SelectItem>
+            <SelectItem value="all">{t("allSources")}</SelectItem>
             {sources?.map((s) => (
               <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
             ))}
@@ -151,7 +138,7 @@ export default function ArticlesPage() {
           </SelectContent>
         </Select>
         <span className="self-center text-sm text-muted-foreground">
-          {sorted.length} {locale === "he" ? "כתבות" : "articles"}
+          {sorted.length} {tCommon("articles")}
         </span>
       </div>
 

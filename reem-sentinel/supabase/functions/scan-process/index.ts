@@ -30,6 +30,24 @@ serve(async (req) => {
 
     const db = getSupabase();
 
+    // --- Read threshold from system_config, fallback to constant ---
+    let threshold = RELEVANCE_THRESHOLD;
+    try {
+      const { data: configRow } = await db
+        .from("system_config")
+        .select("value")
+        .eq("key", "relevance_threshold")
+        .single();
+      if (configRow?.value != null) {
+        const parsed = typeof configRow.value === "number"
+          ? configRow.value
+          : parseFloat(String(configRow.value));
+        if (!isNaN(parsed)) threshold = parsed;
+      }
+    } catch {
+      // Non-critical: use fallback
+    }
+
     // --- Deduplicate by URL hash ---
     const seen = new Set<string>();
     const uniqueArticles: ScrapedArticle[] = [];
@@ -69,7 +87,6 @@ serve(async (req) => {
     }
 
     // --- Filter to new articles only ---
-    const threshold = RELEVANCE_THRESHOLD;
     let newArticles = 0;
     let relevantCount = 0;
 

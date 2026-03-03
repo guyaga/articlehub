@@ -2,7 +2,7 @@
 
 export const SYSTEM_PROMPTS: Record<string, string> = {
   social_post:
-    "You are a social media strategist for an Israeli communications firm. " +
+    "You are a social media strategist. " +
     "Write a concise, engaging social media post in both Hebrew and English.",
   press_release:
     "You are a PR professional. Draft a professional press release " +

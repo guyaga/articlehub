@@ -11,8 +11,18 @@ import { Toaster } from "@/components/ui/sonner";
 import "../globals.css";
 
 export const metadata: Metadata = {
-  title: "Reem-AI Sentinel",
-  description: "AI-powered news monitoring and intelligence system",
+  title: "ArticleHub",
+  description: "AI-powered news monitoring and intelligence platform",
+  openGraph: {
+    title: "ArticleHub",
+    description: "AI-powered news monitoring and intelligence platform",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ArticleHub",
+    description: "AI-powered news monitoring and intelligence platform",
+  },
 };
 
 type Props = {
@@ -33,6 +43,9 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <html lang={locale} dir={dir} className="dark" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+      </head>
       <body className={`${fontClass} ${inter.variable} antialiased font-sans`}>
         <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
           <NextIntlClientProvider messages={messages}>
