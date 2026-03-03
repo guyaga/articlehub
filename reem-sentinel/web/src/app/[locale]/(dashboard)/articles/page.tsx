@@ -243,7 +243,8 @@ export default function ArticlesPage() {
                           {formatDate(article.published_at ?? article.created_at, locale)}
                         </span>
                         {matchedKeywords.map((kw) => (
-                          <Badge key={kw} variant="secondary" className="text-xs">
+                          <Badge key={kw} className="text-xs bg-emerald-500/15 text-emerald-400 gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                             {kw}
                           </Badge>
                         ))}

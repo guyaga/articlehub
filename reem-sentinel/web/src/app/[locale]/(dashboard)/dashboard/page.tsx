@@ -722,6 +722,13 @@ function ArticleRow({
   const isDeep = article.is_drilled_down === true;
   const isMatched = !!analysis;
 
+  let matchedKeywords: string[] = [];
+  try {
+    const raw = analysis?.matched_keywords;
+    if (typeof raw === "string") matchedKeywords = JSON.parse(raw);
+    else if (Array.isArray(raw)) matchedKeywords = raw;
+  } catch {}
+
   // Pipeline status indicator
   const statusColor = isAnalyzed
     ? "bg-purple-500"
@@ -781,6 +788,11 @@ function ArticleRow({
           <span className="text-[11px] text-muted-foreground/60" title={formatDate(article.published_at ?? article.created_at, locale)}>
             {formatDate(article.published_at ?? article.created_at, locale)}
           </span>
+          {matchedKeywords.slice(0, 2).map((kw) => (
+            <Badge key={kw} className="text-[10px] py-0 px-1.5 h-4 bg-emerald-500/15 text-emerald-400">
+              {kw}
+            </Badge>
+          ))}
         </div>
       </div>
 
