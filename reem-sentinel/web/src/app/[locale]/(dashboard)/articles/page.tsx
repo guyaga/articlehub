@@ -17,8 +17,9 @@ import { Link } from "@/i18n/routing";
 import { useArticles, useSources, useDrillDown } from "@/lib/hooks/use-data";
 import { timeAgo, formatDate, sentimentColor } from "@/lib/format";
 import type { Analysis } from "@/lib/supabase/types";
-import { Loader2, Download } from "lucide-react";
+import { Loader2, Download, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 import { SOURCE_FAVICONS } from "@/lib/constants";
 
@@ -31,6 +32,7 @@ export default function ArticlesPage() {
   const { data: sources } = useSources();
 
   const drillDown = useDrillDown();
+  const [fetchingId, setFetchingId] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [sentimentFilter, setSentimentFilter] = useState("all");
@@ -258,24 +260,41 @@ export default function ArticlesPage() {
                           {analysis.sentiment}
                         </Badge>
                       )}
-                      {!isDeep && (
+                      {isDeep ? (
+                        <Badge className="text-xs bg-purple-500/15 text-purple-400 gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          {tDetail("tierDeep")}
+                        </Badge>
+                      ) : analysis && (
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-7 px-2 text-xs gap-1"
                           onClick={(e) => {
                             e.preventDefault();
-                            drillDown.mutate(article.id);
+                            setFetchingId(article.id);
+                            drillDown.mutate(article.id, {
+                              onSuccess: () => {
+                                toast.success(tDetail("fetchFull"), {
+                                  description: article.title?.slice(0, 60),
+                                });
+                                setFetchingId(null);
+                              },
+                              onError: (err) => {
+                                toast.error(err.message);
+                                setFetchingId(null);
+                              },
+                            });
                           }}
-                          disabled={drillDown.isPending}
+                          disabled={fetchingId === article.id}
                           title={tDetail("fetchFull")}
                         >
-                          {drillDown.isPending ? (
+                          {fetchingId === article.id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           ) : (
                             <Download className="h-3.5 w-3.5" />
                           )}
-                          {tDetail("fetchFull")}
+                          {fetchingId === article.id ? tDetail("fetching") : tDetail("fetchFull")}
                         </Button>
                       )}
                     </div>

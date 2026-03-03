@@ -23,6 +23,7 @@ import {
 } from "@/lib/hooks/use-data";
 import { formatDate, sentimentColor } from "@/lib/format";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import type { Analysis, GeneratedContent } from "@/lib/supabase/types";
 
 const CONTENT_TYPES = [
@@ -132,7 +133,12 @@ export default function ArticleDetailPage() {
                 variant="default"
                 size="sm"
                 className="gap-2"
-                onClick={() => drillDown.mutate(articleId)}
+                onClick={() =>
+                  drillDown.mutate(articleId, {
+                    onSuccess: () => toast.success(t("fetchFull"), { description: article.title?.slice(0, 60) }),
+                    onError: (err) => toast.error(err.message),
+                  })
+                }
                 disabled={drillDown.isPending}
               >
                 {drillDown.isPending ? (
