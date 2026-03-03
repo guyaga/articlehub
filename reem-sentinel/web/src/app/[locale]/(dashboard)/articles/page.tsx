@@ -14,9 +14,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Link } from "@/i18n/routing";
-import { useArticles, useSources } from "@/lib/hooks/use-data";
-import { timeAgo, formatDate, relevanceColor, sentimentColor } from "@/lib/format";
+import { useArticles, useSources, useDrillDown } from "@/lib/hooks/use-data";
+import { timeAgo, formatDate, sentimentColor } from "@/lib/format";
 import type { Analysis } from "@/lib/supabase/types";
+import { Loader2, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import { SOURCE_FAVICONS } from "@/lib/constants";
 
@@ -28,11 +30,13 @@ export default function ArticlesPage() {
   const { data: articles, isLoading } = useArticles();
   const { data: sources } = useSources();
 
+  const drillDown = useDrillDown();
+
   const [search, setSearch] = useState("");
   const [sentimentFilter, setSentimentFilter] = useState("all");
-  const [relevanceFilter, setRelevanceFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "relevance">("newest");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
 
   const filtered = articles?.filter((article) => {
     const analysis: Analysis | undefined = article.analyses?.[0];
@@ -41,10 +45,11 @@ export default function ArticlesPage() {
     if (search) {
       const q = search.toLowerCase();
       const titleMatch = article.title?.toLowerCase().includes(q);
+      const contentMatch = article.content?.toLowerCase().includes(q);
       const summaryMatch =
         analysis?.summary_he?.toLowerCase().includes(q) ||
         analysis?.summary_en?.toLowerCase().includes(q);
-      if (!titleMatch && !summaryMatch) return false;
+      if (!titleMatch && !contentMatch && !summaryMatch) return false;
     }
 
     // Sentiment filter
@@ -52,12 +57,14 @@ export default function ArticlesPage() {
       return false;
     }
 
-    // Relevance filter
-    if (relevanceFilter !== "all") {
-      const score = analysis?.relevance_score ?? 0;
-      if (relevanceFilter === "high" && score < 0.7) return false;
-      if (relevanceFilter === "medium" && (score < 0.4 || score >= 0.7)) return false;
-      if (relevanceFilter === "low" && score >= 0.4) return false;
+    // Pipeline status filter
+    if (statusFilter !== "all") {
+      const isAnalyzed = !!analysis?.sentiment;
+      const isDeep = article.is_drilled_down === true;
+      const isMatched = !!analysis;
+      if (statusFilter === "analyzed" && !isAnalyzed) return false;
+      if (statusFilter === "deep" && !isDeep) return false;
+      if (statusFilter === "matched" && !isMatched) return false;
     }
 
     // Source filter
@@ -71,11 +78,6 @@ export default function ArticlesPage() {
 
   // Sort
   const sorted = [...filtered].sort((a, b) => {
-    if (sortBy === "relevance") {
-      const scoreA = (a.analyses?.[0] as Analysis | undefined)?.relevance_score ?? 0;
-      const scoreB = (b.analyses?.[0] as Analysis | undefined)?.relevance_score ?? 0;
-      return scoreB - scoreA;
-    }
     const dateA = new Date(a.published_at ?? a.created_at).getTime();
     const dateB = new Date(b.published_at ?? b.created_at).getTime();
     return sortBy === "oldest" ? dateA - dateB : dateB - dateA;
@@ -93,15 +95,15 @@ export default function ArticlesPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs"
         />
-        <Select value={relevanceFilter} onValueChange={setRelevanceFilter}>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder={t("relevance")} />
+            <SelectValue placeholder={t("statusFilter")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t("allRelevance")}</SelectItem>
-            <SelectItem value="high">{t("high")}</SelectItem>
-            <SelectItem value="medium">{t("medium")}</SelectItem>
-            <SelectItem value="low">{t("low")}</SelectItem>
+            <SelectItem value="all">{t("allStatus")}</SelectItem>
+            <SelectItem value="matched">{t("matched")}</SelectItem>
+            <SelectItem value="analyzed">{t("analyzed")}</SelectItem>
+            <SelectItem value="deep">{t("deepScraped")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sentimentFilter} onValueChange={setSentimentFilter}>
@@ -127,14 +129,13 @@ export default function ArticlesPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={sortBy} onValueChange={(v) => setSortBy(v as "newest" | "oldest" | "relevance")}>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as "newest" | "oldest")}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder={t("sortBy")} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="newest">{t("sortNewest")}</SelectItem>
             <SelectItem value="oldest">{t("sortOldest")}</SelectItem>
-            <SelectItem value="relevance">{t("sortRelevance")}</SelectItem>
           </SelectContent>
         </Select>
         <span className="self-center text-sm text-muted-foreground">
@@ -205,17 +206,17 @@ export default function ArticlesPage() {
                         </a>
                       </div>
 
-                      {/* Summary */}
-                      {locale === "he" && analysis?.summary_he && (
-                        <p className="text-sm text-muted-foreground mt-2 line-clamp-3" dir="rtl">
-                          {analysis.summary_he}
-                        </p>
-                      )}
-                      {locale === "en" && analysis?.summary_en && (
-                        <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
-                          {analysis.summary_en}
-                        </p>
-                      )}
+                      {/* Summary or content snippet */}
+                      {(() => {
+                        const summary = locale === "he" ? analysis?.summary_he : analysis?.summary_en;
+                        const snippet = summary || article.content;
+                        if (!snippet) return null;
+                        return (
+                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2" dir="auto">
+                            {snippet}
+                          </p>
+                        );
+                      })()}
 
                       {/* Meta row */}
                       <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -249,19 +250,32 @@ export default function ArticlesPage() {
                       </div>
                     </div>
 
-                    {/* Scores */}
+                    {/* Status + Actions */}
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      {analysis && (
-                        <>
-                          <Badge className={`text-xs font-mono ${relevanceColor(analysis.relevance_score)}`}>
-                            {analysis.relevance_score
-                              ? `${Math.round(analysis.relevance_score * 100)}%`
-                              : "—"}
-                          </Badge>
-                          <Badge className={`text-xs ${sentimentColor(analysis.sentiment)}`}>
-                            {analysis.sentiment ?? "—"}
-                          </Badge>
-                        </>
+                      {analysis?.sentiment && (
+                        <Badge className={`text-xs ${sentimentColor(analysis.sentiment)}`}>
+                          {analysis.sentiment}
+                        </Badge>
+                      )}
+                      {!isDeep && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs gap-1"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            drillDown.mutate(article.id);
+                          }}
+                          disabled={drillDown.isPending}
+                          title={tDetail("fetchFull")}
+                        >
+                          {drillDown.isPending ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Download className="h-3.5 w-3.5" />
+                          )}
+                          {tDetail("fetchFull")}
+                        </Button>
                       )}
                     </div>
                   </div>

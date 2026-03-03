@@ -34,11 +34,6 @@ export interface ScrapedArticle {
   url_hash?: string;
 }
 
-export interface ScoredArticle {
-  article: ScrapedArticle;
-  headline_score: number;
-}
-
 export interface AnalysisResult {
   relevance_score: number;
   sentiment: "supportive" | "opposing" | "neutral" | "mixed";
@@ -69,5 +64,6 @@ export interface ScrapeResult {
 export interface ProcessResult {
   articles_found: number;
   articles_relevant: number;
+  articles_drilled: number;
   new_articles: number;
 }

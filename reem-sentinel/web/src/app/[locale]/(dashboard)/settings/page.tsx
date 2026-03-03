@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Plus, Pencil, Trash2, Info, Zap, Brain, Filter, BarChart3 } from "lucide-react";
+import { Plus, Pencil, Trash2, Info, Zap, Brain, Filter, BarChart3, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -200,7 +200,7 @@ function KeywordsTab() {
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="flex items-center gap-2.5 rounded-md border border-border/50 bg-background/50 px-3 py-2.5">
               <Filter className="h-4 w-4 text-blue-400 shrink-0" />
               <div>
@@ -211,7 +211,7 @@ function KeywordsTab() {
               </div>
             </div>
             <div className="flex items-center gap-2.5 rounded-md border border-border/50 bg-background/50 px-3 py-2.5">
-              <Zap className="h-4 w-4 text-amber-400 shrink-0" />
+              <Zap className="h-4 w-4 text-green-400 shrink-0" />
               <div>
                 <p className="text-xs font-semibold">{t("step2Title")}</p>
                 <p className="text-[11px] text-muted-foreground">
@@ -220,11 +220,20 @@ function KeywordsTab() {
               </div>
             </div>
             <div className="flex items-center gap-2.5 rounded-md border border-border/50 bg-background/50 px-3 py-2.5">
-              <Brain className="h-4 w-4 text-purple-400 shrink-0" />
+              <Download className="h-4 w-4 text-amber-400 shrink-0" />
               <div>
                 <p className="text-xs font-semibold">{t("step3Title")}</p>
                 <p className="text-[11px] text-muted-foreground">
                   {t("step3Desc")}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2.5 rounded-md border border-border/50 bg-background/50 px-3 py-2.5">
+              <Brain className="h-4 w-4 text-purple-400 shrink-0" />
+              <div>
+                <p className="text-xs font-semibold">{t("step4Title")}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {t("step4Desc")}
                 </p>
               </div>
             </div>

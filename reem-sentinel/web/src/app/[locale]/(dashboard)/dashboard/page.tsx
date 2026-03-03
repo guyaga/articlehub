@@ -81,19 +81,11 @@ const SOURCE_PALETTE = [
 
 import { SOURCE_FAVICONS } from "@/lib/constants";
 
-function relevanceTier(score: number | null | undefined) {
-  if (!score) return { label: "Unscored", bg: "bg-slate-500/10 text-slate-400" };
-  if (score >= 0.7) return { label: "High", bg: "bg-red-500/10 text-red-400" };
-  if (score >= 0.4) return { label: "Medium", bg: "bg-amber-500/10 text-amber-400" };
-  return { label: "Low", bg: "bg-emerald-500/10 text-emerald-400" };
-}
-
 // ── Main Dashboard ────────────────────────────────────────────
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const locale = useLocale();
-  const isRTL = locale === "he";
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: articles, isLoading: articlesLoading } = useArticles();
   const { data: scans } = useScans();
@@ -121,23 +113,26 @@ export default function DashboardPage() {
         fill: SOURCE_PALETTE[i % SOURCE_PALETTE.length],
       }));
 
-    // Relevance distribution
-    let high = 0,
-      medium = 0,
-      low = 0,
-      unscored = 0;
+    // Pipeline status distribution
+    let unmatched = 0,
+      matched = 0,
+      deepScraped = 0,
+      analyzed = 0;
     articles.forEach((a) => {
-      const s = a.analyses?.[0]?.relevance_score;
-      if (s == null || s === 0) unscored++;
-      else if (s >= 0.7) high++;
-      else if (s >= 0.4) medium++;
-      else low++;
+      const analysis = a.analyses?.[0];
+      const hasAnalysis = !!analysis?.sentiment;
+      const isDeep = a.is_drilled_down === true;
+      const isMatched = !!analysis;
+      if (hasAnalysis) analyzed++;
+      else if (isDeep) deepScraped++;
+      else if (isMatched) matched++;
+      else unmatched++;
     });
-    const relevanceData = [
-      { name: t("relevanceHigh"), value: high, fill: CHART_COLORS.red },
-      { name: t("relevanceMedium"), value: medium, fill: CHART_COLORS.amber },
-      { name: t("relevanceLow"), value: low, fill: CHART_COLORS.green },
-      { name: t("relevanceUnscored"), value: unscored, fill: CHART_COLORS.slate },
+    const pipelineData = [
+      { name: t("statusAnalyzed"), value: analyzed, fill: CHART_COLORS.purple },
+      { name: t("statusDeepScraped"), value: deepScraped, fill: CHART_COLORS.blue },
+      { name: t("statusMatched"), value: matched, fill: CHART_COLORS.green },
+      { name: t("statusUnmatched"), value: unmatched, fill: CHART_COLORS.slate },
     ].filter((d) => d.value > 0);
 
     // Sentiment distribution
@@ -147,8 +142,8 @@ export default function DashboardPage() {
       sentMap[s] = (sentMap[s] || 0) + 1;
     });
 
-    return { sourceData, relevanceData, sentimentMap: sentMap, high, medium, low, unscored };
-  }, [articles, isRTL]);
+    return { sourceData, pipelineData, sentimentMap: sentMap };
+  }, [articles, t]);
 
   // Source health
   const sourceHealth = useMemo(() => {
@@ -174,8 +169,8 @@ export default function DashboardPage() {
       })
       .slice(0, 10);
   }, [articles]);
-  const highRelevanceArticles =
-    articles?.filter((a) => (a.analyses?.[0]?.relevance_score ?? 0) >= 0.7) ?? [];
+  const opposingArticles =
+    articles?.filter((a) => a.analyses?.[0]?.sentiment === "opposing") ?? [];
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -227,7 +222,7 @@ export default function DashboardPage() {
             accentColor="blue"
           />
           <MetricCard
-            label={t("relevantArticles")}
+            label={t("analyzedArticles")}
             value={stats?.relevantArticles}
             loading={statsLoading}
             icon={<Target className="h-5 w-5" />}
@@ -269,7 +264,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ── Alert Banner ──────────────────────────────────── */}
-        {highRelevanceArticles.length > 0 && (
+        {opposingArticles.length > 0 && (
           <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
@@ -277,10 +272,10 @@ export default function DashboardPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-red-400">
-                  {t("highRelevance", { count: highRelevanceArticles.length })}
+                  {t("opposingAlert", { count: opposingArticles.length })}
                 </p>
                 <p className="text-xs text-red-400/60 mt-0.5 truncate" dir="auto">
-                  {highRelevanceArticles[0]?.title}
+                  {opposingArticles[0]?.title}
                 </p>
               </div>
               <ChevronRight className="h-4 w-4 text-red-400 shrink-0" />
@@ -376,24 +371,24 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Relevance & Sentiment Row */}
+            {/* Pipeline & Sentiment Row */}
             <div className="grid gap-4 grid-cols-2">
-              {/* Relevance Donut */}
+              {/* Pipeline Status Donut */}
               <Card className="overflow-hidden">
                 <CardHeader className="pb-1 pt-4 px-4 border-b border-border/50">
                   <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <PieChartIcon className="h-3.5 w-3.5" />
-                    {t("relevanceLabel")}
+                    {t("pipelineStatus")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 pt-3">
-                  {analytics?.relevanceData && analytics.relevanceData.length > 0 ? (
+                  {analytics?.pipelineData && analytics.pipelineData.length > 0 ? (
                     <div className="flex flex-col items-center">
                       <div className="h-28 w-28">
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
-                              data={analytics.relevanceData}
+                              data={analytics.pipelineData}
                               cx="50%"
                               cy="50%"
                               innerRadius={28}
@@ -402,7 +397,7 @@ export default function DashboardPage() {
                               dataKey="value"
                               strokeWidth={0}
                             >
-                              {analytics.relevanceData.map((entry, i) => (
+                              {analytics.pipelineData.map((entry, i) => (
                                 <Cell key={i} fill={entry.fill} />
                               ))}
                             </Pie>
@@ -421,7 +416,7 @@ export default function DashboardPage() {
                         </ResponsiveContainer>
                       </div>
                       <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2">
-                        {analytics.relevanceData.map((d) => (
+                        {analytics.pipelineData.map((d) => (
                           <span
                             key={d.name}
                             className="flex items-center gap-1 text-[10px] text-muted-foreground"
@@ -712,19 +707,34 @@ function ArticleRow({
     id: string;
     url: string;
     title: string | null;
+    content: string | null;
     published_at: string | null;
     created_at: string;
+    is_drilled_down?: boolean;
     analyses?: Analysis[];
     source?: unknown;
   };
   locale: string;
 }) {
+  const t = useTranslations("dashboard");
   const analysis = article.analyses?.[0];
-  const score = analysis?.relevance_score;
-  const tier = relevanceTier(score);
+  const isAnalyzed = !!analysis?.sentiment;
+  const isDeep = article.is_drilled_down === true;
+  const isMatched = !!analysis;
+
+  // Pipeline status indicator
+  const statusColor = isAnalyzed
+    ? "bg-purple-500"
+    : isDeep
+      ? "bg-blue-500"
+      : isMatched
+        ? "bg-green-500"
+        : "bg-slate-400";
+
   const source = article.source as { name: string; source_type: string } | undefined;
   const isRTL = locale === "he";
   const summary = isRTL ? analysis?.summary_he : analysis?.summary_en;
+  const snippet = summary || article.content;
 
   return (
     <a
@@ -733,11 +743,9 @@ function ArticleRow({
       rel="noopener noreferrer"
       className="flex items-start gap-3 px-5 py-3.5 hover:bg-muted/40 transition-colors cursor-pointer group"
     >
-      {/* Score pill */}
-      <div
-        className={`h-9 w-9 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ${tier.bg}`}
-      >
-        {score ? Math.round(score * 100) : "\u2014"}
+      {/* Status dot */}
+      <div className="flex items-center justify-center shrink-0 mt-2">
+        <span className={`h-2.5 w-2.5 rounded-full ${statusColor}`} />
       </div>
 
       {/* Content */}
@@ -748,9 +756,9 @@ function ArticleRow({
         >
           {article.title || "Untitled"}
         </p>
-        {summary && (
+        {snippet && (
           <p className="text-xs text-muted-foreground/70 mt-1 line-clamp-1" dir="auto">
-            {summary}
+            {snippet}
           </p>
         )}
         <div className="flex items-center gap-2 mt-1.5">

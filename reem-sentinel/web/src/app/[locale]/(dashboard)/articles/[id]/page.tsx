@@ -21,7 +21,8 @@ import {
   useDrillDown,
   useGenerateArticleContent,
 } from "@/lib/hooks/use-data";
-import { formatDate, relevanceColor, sentimentColor } from "@/lib/format";
+import { formatDate, sentimentColor } from "@/lib/format";
+import { Loader2 } from "lucide-react";
 import type { Analysis, GeneratedContent } from "@/lib/supabase/types";
 
 const CONTENT_TYPES = [
@@ -92,10 +93,6 @@ export default function ArticleDetailPage() {
     else if (Array.isArray(rawEnt)) entities = rawEnt;
   } catch {}
 
-  const relevancePercent = analysis?.relevance_score
-    ? Math.round(analysis.relevance_score * 100)
-    : null;
-
   const contentPreview = article.content ?? "";
   const shouldTruncate = contentPreview.length > 500;
   const displayContent =
@@ -129,6 +126,22 @@ export default function ArticleDetailPage() {
             <StepConnector done={isDeepScraped} />
             <PipelineStep label={t("stepDeepScraped")} done={isDeepScraped} />
           </div>
+          {!isDeepScraped && (
+            <div className="flex justify-center mt-4">
+              <Button
+                variant="default"
+                size="sm"
+                className="gap-2"
+                onClick={() => drillDown.mutate(articleId)}
+                disabled={drillDown.isPending}
+              >
+                {drillDown.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : null}
+                {drillDown.isPending ? t("fetching") : t("fetchFull")}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -159,15 +172,6 @@ export default function ArticleDetailPage() {
         </div>
       </div>
 
-      {/* Below-threshold notice */}
-      {!isAnalyzed && relevancePercent !== null && (
-        <Card className="border-amber-500/30 bg-amber-500/5">
-          <CardContent className="py-3 text-sm text-amber-400">
-            {t("belowThreshold", { score: String(relevancePercent) })}
-          </CardContent>
-        </Card>
-      )}
-
       {/* Analysis Panel */}
       {isAnalyzed && analysis && (
         <Card>
@@ -175,28 +179,12 @@ export default function ArticleDetailPage() {
             <CardTitle className="text-lg">{t("analysis")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Relevance + Sentiment row */}
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">{t("relevance")}:</span>
-                <Badge className={`font-mono ${relevanceColor(analysis.relevance_score)}`}>
-                  {relevancePercent !== null ? `${relevancePercent}%` : "—"}
-                </Badge>
-                {relevancePercent !== null && (
-                  <div className="w-24 h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full transition-all"
-                      style={{ width: `${relevancePercent}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">{t("sentiment")}:</span>
-                <Badge className={sentimentColor(analysis.sentiment)}>
-                  {analysis.sentiment ?? "—"}
-                </Badge>
-              </div>
+            {/* Sentiment */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">{t("sentiment")}:</span>
+              <Badge className={sentimentColor(analysis.sentiment)}>
+                {analysis.sentiment ?? "—"}
+              </Badge>
             </div>
 
             <Separator />
@@ -281,14 +269,6 @@ export default function ArticleDetailPage() {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
-        <Button
-          variant="outline"
-          onClick={() => drillDown.mutate(articleId)}
-          disabled={drillDown.isPending || isDeepScraped}
-        >
-          {drillDown.isPending ? t("deepScraping") : t("deepScrape")}
-        </Button>
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button disabled={generateContent.isPending}>

@@ -24,13 +24,6 @@ export function formatDate(date: string | null, locale: string = "he"): string {
   }).format(new Date(date));
 }
 
-export function relevanceColor(score: number | null): string {
-  if (score === null) return "bg-muted text-muted-foreground";
-  if (score >= 0.7) return "bg-red-500/15 text-red-400";
-  if (score >= 0.4) return "bg-amber-500/15 text-amber-400";
-  return "bg-green-500/15 text-green-400";
-}
-
 export function sentimentColor(sentiment: string | null): string {
   switch (sentiment) {
     case "supportive":

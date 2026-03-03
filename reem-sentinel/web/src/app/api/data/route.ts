@@ -213,7 +213,7 @@ async function runQuery(
           supabase
             .from("analyses")
             .select("id", { count: "exact", head: true })
-            .gte("relevance_score", 0.5),
+            .not("sentiment", "is", null),
         ]);
 
       return {

@@ -37,13 +37,13 @@ serve(async (req) => {
       .select("id, url, title, author, published_at")
       .in("id", articleIds);
 
-    // Fetch analyses (only those with full analysis, score >= 0.5)
+    // Fetch analyses (only those with full Claude analysis)
     const { data: analyses } = await db
       .from("analyses")
       .select("*")
       .in("article_id", articleIds)
-      .gte("relevance_score", 0.5)
-      .neq("model_used", "headline-scoring");
+      .not("sentiment", "is", null)
+      .neq("model_used", "keyword-match");
 
     if (!analyses || analyses.length === 0) {
       return jsonResponse({ message: "No relevant articles to brief on", sent: false });

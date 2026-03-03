@@ -1,80 +1,12 @@
-/** Headline scoring and article analysis via Claude. */
+/** Article analysis via Claude. */
 
 import { getAnthropic, stripCodeFences } from "./anthropic-client.ts";
 import {
-  SCORING_MODEL,
   ANALYSIS_MODEL,
-  HEADLINE_SCORE_MAX_TOKENS,
   ANALYSIS_MAX_TOKENS,
   ANALYSIS_CONTENT_LIMIT,
 } from "./constants.ts";
 import type { Keyword, ScrapedArticle, AnalysisResult } from "./types.ts";
-
-/**
- * Quick relevance score for a headline (0.0-1.0).
- * Lightweight Claude call with 64 max_tokens.
- */
-export async function scoreHeadline(
-  title: string,
-  keywords: Keyword[],
-  lead = "",
-): Promise<number> {
-  const results = await scoreHeadlinesBatch([{ title, lead }], keywords);
-  return results[0];
-}
-
-/**
- * Batch score multiple headlines in a single Claude call.
- * Much faster than scoring one at a time (1 API call for N headlines).
- */
-export async function scoreHeadlinesBatch(
-  items: Array<{ title: string; lead?: string }>,
-  keywords: Keyword[],
-): Promise<number[]> {
-  if (items.length === 0) return [];
-
-  // Sort by weight descending so Claude sees most important keywords first
-  const sorted = [...keywords].sort((a, b) => b.weight - a.weight);
-  const kwText = sorted
-    .map((k) => {
-      const w = k.weight;
-      const priority = w >= 8 ? "CRITICAL" : w >= 5 ? "HIGH" : "NORMAL";
-      return `${k.term_he} (${k.term_en ?? ""}) [${priority}]`;
-    }).join(", ");
-
-  const headlineList = items.map((item, i) => {
-    const leadPart = item.lead ? ` | Lead: ${item.lead.slice(0, 150)}` : "";
-    return `${i + 1}. ${item.title}${leadPart}`;
-  }).join("\n");
-
-  const prompt =
-    "You are a media monitoring assistant. " +
-    "Rate the relevance of each headline to the monitoring keywords.\n" +
-    "Keywords marked CRITICAL should have the strongest influence on the score. " +
-    "HIGH keywords are important. NORMAL keywords are supplementary.\n\n" +
-    `Keywords: ${kwText}\n\n` +
-    `Headlines:\n${headlineList}\n\n` +
-    `Return ONLY a JSON array of ${items.length} numbers (floats 0.0-1.0), one per headline, in order.\n` +
-    `Example for 3 headlines: [0.1, 0.8, 0.3]\nNo other text.`;
-
-  try {
-    const client = getAnthropic();
-    const response = await client.messages.create({
-      model: SCORING_MODEL,
-      max_tokens: Math.max(128, items.length * 8),
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    const raw = stripCodeFences(
-      response.content[0].type === "text" ? response.content[0].text : "",
-    );
-    const scores: number[] = JSON.parse(raw);
-    return scores.map((s) => Math.max(0.0, Math.min(1.0, parseFloat(String(s)) || 0)));
-  } catch (err) {
-    console.error(`Batch headline scoring failed:`, err);
-    return items.map(() => 0.0);
-  }
-}
 
 /**
  * Full article analysis via Claude.
