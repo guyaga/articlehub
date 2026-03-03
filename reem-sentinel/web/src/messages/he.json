@@ -24,6 +24,7 @@
     "articles": "כתבות",
     "content": "תוכן",
     "knowledge": "מאגר ידע",
+    "status": "סטטוס פרויקט",
     "settings": "הגדרות"
   },
   "auth": {
@@ -198,6 +199,13 @@
     "weightCritical": "קריטי (משקל 8-10): השפעה מקסימלית",
     "weightHigh": "גבוה (משקל 5-7): חשוב",
     "weightNormal": "רגיל (משקל 0-4): משלים"
+  },
+  "status": {
+    "title": "סטטוס פרויקט",
+    "subtitle": "מצב נוכחי של תכונות ועבודה מתוכננת",
+    "done": "הושלם",
+    "inProgress": "בביצוע",
+    "planned": "מתוכנן"
   },
   "timeAgo": {
     "justNow": "עכשיו",

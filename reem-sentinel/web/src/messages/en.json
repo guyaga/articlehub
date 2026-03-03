@@ -24,6 +24,7 @@
     "articles": "Articles",
     "content": "Content",
     "knowledge": "Knowledge Base",
+    "status": "Project Status",
     "settings": "Settings"
   },
   "auth": {
@@ -198,6 +199,13 @@
     "weightCritical": "CRITICAL (weight 8-10): Maximum influence",
     "weightHigh": "HIGH (weight 5-7): Important",
     "weightNormal": "NORMAL (weight 0-4): Supplementary"
+  },
+  "status": {
+    "title": "Project Status",
+    "subtitle": "Current state of features and planned work",
+    "done": "Done",
+    "inProgress": "In Progress",
+    "planned": "Planned"
   },
   "timeAgo": {
     "justNow": "just now",

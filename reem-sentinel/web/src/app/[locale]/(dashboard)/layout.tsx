@@ -27,6 +27,7 @@ const navItems = [
   { key: "articles", href: "/articles", icon: "Newspaper" },
   { key: "content", href: "/content", icon: "FileText" },
   { key: "knowledge", href: "/knowledge", icon: "BookOpen" },
+  { key: "status", href: "/status", icon: "ClipboardList" },
   { key: "settings", href: "/settings", icon: "Settings" },
 ] as const;
 
