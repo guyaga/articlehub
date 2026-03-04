@@ -16,7 +16,7 @@ import { useArticles, useSources } from "@/lib/hooks/use-data";
 import type { Analysis } from "@/lib/supabase/types";
 import { ArticleCard } from "@/components/article-card";
 
-export default function ArticlesPage() {
+export default function RelevantPage() {
   const t = useTranslations("articles");
   const tCommon = useTranslations("common");
   const { data: articles, isLoading } = useArticles();
@@ -24,12 +24,15 @@ export default function ArticlesPage() {
 
   const [search, setSearch] = useState("");
   const [sentimentFilter, setSentimentFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
 
+  // Only show AI-analyzed articles (those with sentiment)
   const filtered = articles?.filter((article) => {
     const analysis: Analysis | undefined = article.analyses?.[0];
+
+    // Must have AI analysis with sentiment
+    if (!analysis?.sentiment) return false;
 
     if (search) {
       const q = search.toLowerCase();
@@ -41,17 +44,8 @@ export default function ArticlesPage() {
       if (!titleMatch && !contentMatch && !summaryMatch) return false;
     }
 
-    if (sentimentFilter !== "all" && analysis?.sentiment !== sentimentFilter) {
+    if (sentimentFilter !== "all" && analysis.sentiment !== sentimentFilter) {
       return false;
-    }
-
-    if (statusFilter !== "all") {
-      const isAnalyzed = !!analysis?.sentiment;
-      const isDeep = article.is_drilled_down === true;
-      const isMatched = !!analysis;
-      if (statusFilter === "analyzed" && !isAnalyzed) return false;
-      if (statusFilter === "deep" && !isDeep) return false;
-      if (statusFilter === "matched" && !isMatched) return false;
     }
 
     if (sourceFilter !== "all") {
@@ -70,7 +64,7 @@ export default function ArticlesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">{t("title")}</h1>
+      <h1 className="text-3xl font-bold">{t("relevantTitle")}</h1>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
@@ -80,17 +74,6 @@ export default function ArticlesPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs"
         />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder={t("statusFilter")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("allStatus")}</SelectItem>
-            <SelectItem value="matched">{t("matched")}</SelectItem>
-            <SelectItem value="analyzed">{t("analyzed")}</SelectItem>
-            <SelectItem value="deep">{t("deepScraped")}</SelectItem>
-          </SelectContent>
-        </Select>
         <Select value={sentimentFilter} onValueChange={setSentimentFilter}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder={t("sentiment")} />

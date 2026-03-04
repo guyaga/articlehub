@@ -53,6 +53,8 @@ const PROJECT_STATUS: StatusSection[] = [
       { label: "Article detail — pipeline stepper with CTA", status: "done" },
       { label: "Article detail — sentiment + summaries + entities", status: "done" },
       { label: "Generated content panel", status: "done" },
+      { label: "Split Feed / Relevant views", status: "done" },
+      { label: "Shared ArticleCard component", status: "done" },
     ],
   },
   {
@@ -72,6 +74,8 @@ const PROJECT_STATUS: StatusSection[] = [
       { label: "i18n — Hebrew + English", status: "done" },
       { label: "Dark/Light theme", status: "done" },
       { label: "Rebrand to ArticleHub", status: "done" },
+      { label: "Sidebar redesign — grouped nav with Lucide icons", status: "done" },
+      { label: "RSS retry logic (1 retry, 3s delay)", status: "done" },
     ],
   },
   {

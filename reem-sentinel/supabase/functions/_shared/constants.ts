@@ -6,7 +6,7 @@ export const MAX_CONCURRENT_SCRAPES = parseInt(
 );
 
 export const FIRECRAWL_BASE_URL = "https://api.firecrawl.dev/v1";
-export const FIRECRAWL_CONCURRENCY = 5;
+export const FIRECRAWL_CONCURRENCY = 10;
 
 export const ANALYSIS_MODEL = "claude-sonnet-4-5-20250929";
 export const GENERATION_MODEL = "claude-sonnet-4-20250514";

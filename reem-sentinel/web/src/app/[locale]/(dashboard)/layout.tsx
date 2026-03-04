@@ -4,7 +4,18 @@ import type { ReactNode } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { usePathname, Link } from "@/i18n/routing";
 import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  LayoutDashboard,
+  Radar,
+  Newspaper,
+  Star,
+  FileText,
+  BookOpen,
+  ClipboardList,
+  Settings,
+} from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -16,20 +27,55 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarTrigger,
+  SidebarGroup,
+  SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
+import type { LucideIcon } from "lucide-react";
 
-const navItems = [
-  { key: "dashboard", href: "/dashboard", icon: "LayoutDashboard" },
-  { key: "scans", href: "/scans", icon: "Radar" },
-  { key: "articles", href: "/articles", icon: "Newspaper" },
-  { key: "content", href: "/content", icon: "FileText" },
-  { key: "knowledge", href: "/knowledge", icon: "BookOpen" },
-  { key: "status", href: "/status", icon: "ClipboardList" },
-  { key: "settings", href: "/settings", icon: "Settings" },
-] as const;
+interface NavItem {
+  key: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+interface NavGroup {
+  labelKey: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    labelKey: "groupMonitor",
+    items: [
+      { key: "dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { key: "scans", href: "/scans", icon: Radar },
+    ],
+  },
+  {
+    labelKey: "groupContent",
+    items: [
+      { key: "feed", href: "/articles", icon: Newspaper },
+      { key: "relevant", href: "/relevant", icon: Star },
+      { key: "content", href: "/content", icon: FileText },
+    ],
+  },
+  {
+    labelKey: "groupKnowledge",
+    items: [
+      { key: "knowledge", href: "/knowledge", icon: BookOpen },
+    ],
+  },
+  {
+    labelKey: "groupSystem",
+    items: [
+      { key: "status", href: "/status", icon: ClipboardList },
+      { key: "settings", href: "/settings", icon: Settings },
+    ],
+  },
+];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("nav");
@@ -52,18 +98,31 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </SidebarHeader>
         <SidebarContent>
-          <SidebarMenu>
-            {navItems.map((item) => (
-              <SidebarMenuItem key={item.key}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname.startsWith(item.href)}
-                >
-                  <Link href={item.href}>{t(item.key)}</Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
+          {navGroups.map((group) => (
+            <SidebarGroup key={group.labelKey}>
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/60 px-3">
+                {t(group.labelKey)}
+              </SidebarGroupLabel>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <SidebarMenuItem key={item.key}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname.startsWith(item.href)}
+                      >
+                        <Link href={item.href} className="flex items-center gap-2.5">
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span>{t(item.key)}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroup>
+          ))}
           <Separator className="my-2" />
           <SidebarMenu>
             <SidebarMenuItem>

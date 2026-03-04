@@ -29,7 +29,15 @@ serve(async (req) => {
         result = { articles, source_id: source.id, status: "ok" };
       } else {
         const rssUrl = source.rss_url ?? source.url;
-        const articles = await parseRssFeed(rssUrl, source.id);
+        let articles;
+        try {
+          articles = await parseRssFeed(rssUrl, source.id);
+        } catch (firstErr) {
+          console.warn(`RSS fetch failed for ${source.name}, retrying in 3s...`, firstErr);
+          await new Promise((r) => setTimeout(r, 3000));
+          articles = await parseRssFeed(rssUrl, source.id);
+          console.log(`RSS retry succeeded for ${source.name}`);
+        }
         result = { articles, source_id: source.id, status: "ok" };
       }
     } catch (err) {

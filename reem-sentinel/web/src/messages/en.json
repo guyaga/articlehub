@@ -21,11 +21,17 @@
   "nav": {
     "dashboard": "Dashboard",
     "scans": "Scans",
+    "feed": "Feed",
+    "relevant": "Relevant",
     "articles": "Articles",
     "content": "Content",
     "knowledge": "Knowledge Base",
     "status": "Project Status",
-    "settings": "Settings"
+    "settings": "Settings",
+    "groupMonitor": "Monitor",
+    "groupContent": "Content",
+    "groupKnowledge": "Knowledge",
+    "groupSystem": "System"
   },
   "auth": {
     "login": "Login",
@@ -78,6 +84,7 @@
   },
   "articles": {
     "title": "Articles",
+    "relevantTitle": "Relevant Articles",
     "relevance": "Relevance",
     "sentiment": "Sentiment",
     "source": "Source",

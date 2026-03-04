@@ -21,11 +21,17 @@
   "nav": {
     "dashboard": "לוח בקרה",
     "scans": "סריקות",
+    "feed": "פיד",
+    "relevant": "רלוונטי",
     "articles": "כתבות",
     "content": "תוכן",
     "knowledge": "מאגר ידע",
     "status": "סטטוס פרויקט",
-    "settings": "הגדרות"
+    "settings": "הגדרות",
+    "groupMonitor": "ניטור",
+    "groupContent": "תוכן",
+    "groupKnowledge": "ידע",
+    "groupSystem": "מערכת"
   },
   "auth": {
     "login": "כניסה",
@@ -78,6 +84,7 @@
   },
   "articles": {
     "title": "כתבות",
+    "relevantTitle": "כתבות רלוונטיות",
     "relevance": "רלוונטיות",
     "sentiment": "סנטימנט",
     "source": "מקור",
