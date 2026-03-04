@@ -105,7 +105,8 @@
     "opposing": "Opposing",
     "neutral": "Neutral",
     "mixed": "Mixed",
-    "allSources": "All Sources"
+    "allSources": "All Sources",
+    "viewArticle": "View"
   },
   "articleDetail": {
     "backToArticles": "Back to Articles",

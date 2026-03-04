@@ -8,7 +8,7 @@ import { Link } from "@/i18n/routing";
 import { useDrillDown } from "@/lib/hooks/use-data";
 import { formatDate, sentimentColor } from "@/lib/format";
 import type { Analysis } from "@/lib/supabase/types";
-import { Loader2, Download, CheckCircle2 } from "lucide-react";
+import { Loader2, Download, CheckCircle2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { SOURCE_FAVICONS } from "@/lib/constants";
@@ -125,6 +125,17 @@ export function ArticleCard({ article }: ArticleCardProps) {
           </div>
 
           <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs gap-1"
+              asChild
+            >
+              <Link href={`/articles/${article.id}`}>
+                <Eye className="h-3.5 w-3.5" />
+                {t("viewArticle")}
+              </Link>
+            </Button>
             {analysis?.sentiment && (
               <Badge className={`text-xs ${sentimentColor(analysis.sentiment)}`}>
                 {analysis.sentiment}
