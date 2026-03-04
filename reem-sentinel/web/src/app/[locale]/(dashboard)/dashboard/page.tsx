@@ -107,7 +107,7 @@ export default function DashboardPage() {
     const sourceData = Object.entries(srcMap)
       .sort(([, a], [, b]) => b - a)
       .map(([name, count], i) => ({
-        name: name.length > 14 ? name.slice(0, 13) + "\u2026" : name,
+        name,
         fullName: name,
         count,
         fill: SOURCE_PALETTE[i % SOURCE_PALETTE.length],
@@ -338,7 +338,7 @@ export default function DashboardPage() {
                         <YAxis
                           type="category"
                           dataKey="name"
-                          width={90}
+                          width={110}
                           tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
                           axisLine={false}
                           tickLine={false}
