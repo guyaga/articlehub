@@ -135,10 +135,11 @@ export default function DashboardPage() {
       { name: t("statusUnmatched"), value: unmatched, fill: CHART_COLORS.slate },
     ].filter((d) => d.value > 0);
 
-    // Sentiment distribution
+    // Sentiment distribution — only for analyzed articles
     const sentMap: Record<string, number> = {};
     articles.forEach((a) => {
-      const s = a.analyses?.[0]?.sentiment ?? "unknown";
+      const s = a.analyses?.[0]?.sentiment;
+      if (!s) return;
       sentMap[s] = (sentMap[s] || 0) + 1;
     });
 
@@ -444,12 +445,12 @@ export default function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 pt-3">
-                  {analytics?.sentimentMap ? (
+                  {analytics?.sentimentMap && Object.keys(analytics.sentimentMap).length > 0 ? (
                     <div className="space-y-3">
                       {Object.entries(analytics.sentimentMap)
                         .sort(([, a], [, b]) => b - a)
                         .map(([sentiment, count]) => {
-                          const total = articles?.length ?? 1;
+                          const total = Object.values(analytics.sentimentMap).reduce((a, b) => a + b, 0) || 1;
                           const pct = Math.round((count / total) * 100);
                           return (
                             <div key={sentiment}>
